@@ -848,7 +848,7 @@ async function callAI(messages,system){
   if(!key)throw new Error('No API key');
   const body={model:MODEL,max_tokens:1500,messages,_apiKey:key};
   if(system)body.system=system;
-  const res=await fetch('https://gmcommandcentre.verbalemotions.workers.dev/',{
+  const res=await fetch('https://gmcommandcentre.verbalemotions.workers.dev',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify(body)
