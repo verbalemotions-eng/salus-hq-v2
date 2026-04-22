@@ -846,11 +846,11 @@ function getKey(){return localStorage.getItem('salus-api-key')||'';}
 async function callAI(messages,system){
   const key=getKey();
   if(!key)throw new Error('No API key');
-  const body={model:MODEL,max_tokens:1500,messages};
+  const body={model:MODEL,max_tokens:1500,messages,_apiKey:key};
   if(system)body.system=system;
-  const res=await fetch('https://api.anthropic.com/v1/messages',{
+  const res=await fetch('/api/claude',{
     method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},
+    headers:{'Content-Type':'application/json'},
     body:JSON.stringify(body)
   });
   if(!res.ok)throw new Error('API error '+res.status);
