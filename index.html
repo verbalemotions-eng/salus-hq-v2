@@ -1,0 +1,1743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Salus HQ">
+<title>Salus HQ — GM Command Centre</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --bg:#fff;--bg2:#f7f7f7;--bg3:#f0f0f0;--text:#111;--text2:#666;--text3:#aaa;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.14);
+  --navy:#0C447C;--navy-dark:#042C53;--navy-mid:#185FA5;--navy-light:#E6F1FB;--navy-pale:#f0f6fd;
+  --purple:#534AB7;--purple-dark:#3C3489;--purple-light:#EEEDFE;
+  --green:#1D9E75;--green-dark:#27500A;--green-light:#EAF3DE;
+  --red:#E24B4A;--amber:#EF9F27;--r:8px;--rl:12px;--rxl:16px;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#161616;--bg2:#1f1f1f;--bg3:#111;--text:#f0f0f0;--text2:#999;--text3:#555;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --navy-light:#0a1e30;--navy-pale:#0d2540;--purple-light:#1a1730;--green-light:#0d1f0f;
+}}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;background:var(--bg3);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;}
+
+.setup{position:fixed;inset:0;background:var(--navy-dark);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;}
+.setup-box{background:var(--bg);border-radius:var(--rxl);padding:36px;width:100%;max-width:500px;}
+.setup-logo{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+.setup-mark{width:38px;height:38px;border-radius:10px;background:var(--navy-dark);display:flex;align-items:center;justify-content:center;}
+.setup-mark svg{width:18px;height:18px;fill:white;}
+.setup-title{font-size:22px;font-weight:700;letter-spacing:-.03em;}
+.setup-desc{font-size:13px;color:var(--text2);margin-bottom:24px;line-height:1.6;}
+.setup-step{background:var(--bg2);border-radius:var(--r);padding:14px 16px;margin-bottom:8px;font-size:13px;color:var(--text2);line-height:1.5;}
+.setup-step strong{color:var(--text);font-weight:600;}
+.setup-step a{color:var(--navy-mid);}
+.setup-input-row{display:flex;gap:10px;margin-top:16px;}
+.setup-input{flex:1;padding:10px 14px;border:1.5px solid var(--border2);border-radius:var(--r);font-size:13px;background:var(--bg);color:var(--text);font-family:inherit;}
+.setup-input:focus{outline:none;border-color:var(--navy-mid);}
+.setup-err{color:var(--red);font-size:12px;margin-top:8px;display:none;}
+
+.app{display:flex;height:100vh;overflow:hidden;}
+.sidebar{width:232px;min-width:232px;background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
+.logo{padding:20px 18px 16px;border-bottom:1px solid var(--border);}
+.logo-row{display:flex;align-items:center;gap:10px;margin-bottom:3px;}
+.logo-mark{width:30px;height:30px;border-radius:9px;background:var(--navy-dark);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo-mark svg{width:15px;height:15px;fill:white;}
+.logo-name{font-size:15px;font-weight:700;letter-spacing:-.025em;}
+.logo-sub{font-size:11px;color:var(--text2);padding-left:40px;}
+.nav{padding:12px 8px;flex:1;}
+.nsec{font-size:9.5px;font-weight:700;color:var(--text3);padding:10px 10px 3px;letter-spacing:.09em;text-transform:uppercase;}
+.ni{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:var(--r);cursor:pointer;font-size:13px;color:var(--text2);margin-bottom:1px;transition:background .1s,color .1s;font-weight:500;}
+.ni:hover{background:var(--bg2);color:var(--text);}
+.ni.active{background:var(--navy-dark);color:white;}
+.ni svg{width:15px;height:15px;flex-shrink:0;opacity:.7;}
+.ni.active svg{opacity:1;}
+.ni-badge{margin-left:auto;background:var(--red);color:white;font-size:10px;font-weight:600;border-radius:20px;padding:1px 7px;}
+.ni-new{margin-left:auto;background:var(--navy-mid);color:white;font-size:9px;padding:2px 6px;border-radius:5px;font-weight:600;}
+.ni.coach{color:var(--purple-dark);}
+.ni.coach.active{background:var(--purple-dark);color:white;}
+.ni.ng{color:var(--green-dark);}
+.ni.ng.active{background:var(--green-dark);color:white;}
+
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;min-width:0;}
+.topbar{background:var(--bg);border-bottom:1px solid var(--border);padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;}
+.topbar-l{display:flex;align-items:baseline;gap:14px;}
+.topbar-title{font-size:16px;font-weight:700;letter-spacing:-.025em;}
+.topbar-date{font-size:12px;color:var(--text2);}
+.topbar-r{display:flex;gap:8px;}
+.btn{padding:7px 15px;border-radius:var(--r);font-size:12.5px;cursor:pointer;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-family:inherit;font-weight:500;transition:background .1s;white-space:nowrap;}
+.btn:hover{background:var(--bg2);}
+.btn-navy{background:var(--navy-dark);color:white;border-color:var(--navy-dark);}
+.btn-navy:hover{background:#031e3a;}
+.btn-sm{padding:5px 11px;font-size:12px;}
+.btn-green{background:var(--green-dark);color:white;border-color:var(--green-dark);}
+.btn-red{background:var(--red);color:white;border-color:var(--red);}
+.btn-purple{background:var(--purple-dark);color:white;border-color:var(--purple-dark);}
+.btn-amber{background:var(--amber);color:white;border-color:var(--amber);}
+
+.content{padding:24px;flex:1;}
+.view{display:none;}
+.view.active{display:block;}
+
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.stat{background:var(--bg);border:1px solid var(--border);border-radius:var(--rl);padding:18px 18px 14px;overflow:hidden;position:relative;}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.stat.blue::before{background:var(--navy-mid);}
+.stat.red::before{background:var(--red);}
+.stat.green::before{background:var(--green);}
+.stat.purple::before{background:var(--purple);}
+.stat-label{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;}
+.stat-value{font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1;}
+.stat-sub{font-size:11px;color:var(--text2);margin-top:6px;}
+
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--rl);padding:20px;}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.card-title{font-size:13px;font-weight:600;letter-spacing:-.01em;}
+.card-pill{font-size:11px;color:var(--text2);background:var(--bg2);padding:2px 9px;border-radius:20px;}
+.two-col{display:grid;grid-template-columns:1fr 308px;gap:16px;margin-bottom:20px;}
+.col-stack{display:flex;flex-direction:column;gap:14px;}
+
+.ai-banner{background:var(--navy-dark);border-radius:var(--rl);padding:18px 20px;margin-bottom:20px;display:none;}
+.ai-banner-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.ai-tag{background:rgba(255,255,255,.15);color:white;font-size:10px;padding:3px 9px;border-radius:5px;font-weight:600;letter-spacing:.05em;}
+.ai-banner-title{font-size:13px;font-weight:600;color:white;}
+.ai-banner-body{font-size:13px;color:#85B7EB;line-height:1.65;}
+.loading{font-size:13px;color:var(--text2);padding:12px;text-align:center;display:none;}
+
+.perf-strip{background:var(--bg);border:1px solid var(--border);border-radius:var(--rl);padding:18px;margin-bottom:20px;}
+.perf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px;}
+.perf-cell{background:var(--bg2);border-radius:var(--r);padding:12px;text-align:center;}
+.perf-val{font-size:22px;font-weight:700;letter-spacing:-.02em;}
+.perf-label{font-size:10px;color:var(--text2);margin-top:3px;font-weight:500;}
+
+.task-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:all .1s;}
+.task-row:last-child{border-bottom:none;}
+.task-row:hover{background:var(--bg2);margin:0 -8px;padding:9px 8px;border-radius:var(--r);}
+.tcircle{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--border2);flex-shrink:0;cursor:pointer;}
+.tcircle.done{background:var(--green);border-color:var(--green);}
+.tbody{flex:1;min-width:0;}
+.ttitle{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ttitle.done{text-decoration:line-through;color:var(--text2);font-weight:400;}
+.tmeta{font-size:11px;color:var(--text2);margin-top:2px;}
+.tdue{font-size:11px;color:var(--text2);white-space:nowrap;flex-shrink:0;}
+.tdue.late{color:var(--red);font-weight:600;}
+
+.chip{font-size:10px;padding:3px 8px;border-radius:6px;font-weight:600;flex-shrink:0;white-space:nowrap;}
+.pdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.ph{background:var(--red);}.pm{background:var(--amber);}.pl{background:var(--green);}
+
+.alert-row{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
+.alert-row:last-child{border-bottom:none;}
+.apip{width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+.vbar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.vbar-label{font-size:11px;color:var(--text2);width:78px;flex-shrink:0;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.vbar-track{flex:1;height:5px;background:var(--bg2);border-radius:3px;overflow:hidden;}
+.vbar-fill{height:100%;border-radius:3px;}
+.vbar-n{font-size:11px;color:var(--text2);width:18px;text-align:right;}
+
+.tabs{display:flex;gap:2px;padding:3px;background:var(--bg2);border-radius:var(--r);width:fit-content;margin-bottom:18px;flex-wrap:wrap;}
+.tab{padding:5px 16px;border-radius:6px;font-size:12.5px;cursor:pointer;color:var(--text2);font-weight:500;}
+.tab.active{background:var(--bg);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08);}
+.filter-row{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+.fchip{font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--border2);cursor:pointer;color:var(--text2);background:var(--bg);font-weight:500;}
+.fchip.active{background:var(--navy-dark);color:white;border-color:var(--navy-dark);}
+
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{font-size:10.5px;font-weight:600;color:var(--text2);text-align:left;padding:7px 12px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.06em;}
+.tbl td{font-size:13px;padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.tbl tr:hover td{background:var(--bg2);}
+.tbl tr:last-child td{border-bottom:none;}
+.status-pill{font-size:11px;padding:3px 9px;border-radius:20px;background:var(--bg2);color:var(--text2);}
+
+.kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.kcol{background:var(--bg2);border-radius:var(--rl);padding:14px;}
+.kcol-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.kcol-label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;}
+.kcol-n{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1px 7px;font-size:11px;color:var(--text2);}
+.kcard{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:8px;cursor:pointer;transition:border-color .12s;}
+.kcard:hover{border-color:var(--navy-mid);}
+.kcard-title{font-size:12.5px;font-weight:500;margin-bottom:8px;line-height:1.4;}
+.kcard-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+
+.brain-drop{border:1.5px dashed var(--border2);border-radius:var(--rl);padding:28px;text-align:center;cursor:pointer;margin-bottom:18px;transition:all .15s;}
+.brain-drop:hover{border-color:var(--navy-mid);background:var(--navy-pale);}
+.brain-status{background:var(--navy-dark);border-radius:var(--rl);padding:16px 20px;margin-bottom:18px;}
+.brain-entry{display:flex;align-items:flex-start;gap:12px;padding:12px;background:var(--bg2);border-radius:var(--r);margin-bottom:8px;}
+.brain-icon{width:32px;height:32px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.sec-title{font-size:10.5px;font-weight:600;color:var(--text2);margin-bottom:12px;text-transform:uppercase;letter-spacing:.08em;}
+
+.score-hero{background:var(--bg);border:1px solid var(--border);border-radius:var(--rl);padding:24px;margin-bottom:18px;display:flex;align-items:center;gap:24px;}
+.score-pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+.score-pill{font-size:11px;padding:4px 11px;border-radius:20px;font-weight:600;}
+.charts-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;}
+.insight-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--rl);padding:16px;display:flex;gap:12px;margin-bottom:10px;}
+.insight-icon{width:34px;height:34px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.insight-title{font-size:13px;font-weight:600;margin-bottom:3px;}
+.insight-text{font-size:12.5px;color:var(--text2);line-height:1.55;}
+.bn-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg2);border-radius:var(--r);margin-bottom:6px;}
+.bn-track{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.bn-fill{height:100%;border-radius:2px;}
+.ai-coach-box{background:var(--navy-dark);border-radius:var(--rl);padding:18px 20px;margin-bottom:18px;display:none;}
+.ai-coach-body{font-size:13px;color:#85B7EB;line-height:1.65;}
+.raise-strip{background:var(--purple-light);border:1px solid #AFA9EC;border-radius:var(--rl);padding:18px;margin-bottom:18px;}
+.raise-week{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:8px;}
+
+.ng-hero{background:var(--navy-dark);border-radius:var(--rl);padding:22px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;}
+.ng-badge{background:rgba(255,255,255,.12);color:#9FE1CB;font-size:10px;padding:3px 10px;border-radius:5px;font-weight:600;letter-spacing:.05em;display:inline-block;margin-bottom:8px;}
+.ng-title{font-size:16px;font-weight:700;color:white;margin-bottom:3px;}
+.ng-sub{font-size:12px;color:#9FE1CB;}
+.ng-stats{display:flex;gap:24px;}
+.ng-val{font-size:24px;font-weight:700;color:white;}
+.ng-label{font-size:10px;color:#9FE1CB;margin-top:2px;font-weight:500;}
+.ng-intel{background:var(--green-light);border:1px solid #97C459;border-radius:var(--r);padding:14px 16px;margin-bottom:18px;font-size:13px;color:#085041;line-height:1.65;}
+.pipeline-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+.pipeline-status{font-size:10px;padding:3px 9px;border-radius:20px;font-weight:600;white-space:nowrap;}
+
+/* PROJECTS */
+.project-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--rl);padding:18px;margin-bottom:12px;cursor:pointer;transition:border-color .12s;}
+.project-card:hover{border-color:var(--navy-mid);}
+.project-hero{height:6px;border-radius:3px;margin-bottom:14px;}
+.project-title{font-size:15px;font-weight:700;margin-bottom:4px;}
+.project-meta{font-size:12px;color:var(--text2);margin-bottom:12px;}
+.project-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.project-stat{background:var(--bg2);border-radius:var(--r);padding:8px;text-align:center;}
+.project-stat-val{font-size:16px;font-weight:700;}
+.project-stat-label{font-size:10px;color:var(--text2);margin-top:2px;}
+.project-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+
+/* PEOPLE / ORG */
+.people-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.pcard{background:var(--bg);border:1px solid var(--border);border-radius:var(--rl);padding:14px 16px;cursor:pointer;transition:border-color .12s;}
+.pcard:hover{border-color:var(--navy-mid);}
+.pcard-top{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.avatar{border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;}
+.mdot{width:8px;height:8px;border-radius:50%;margin-left:auto;flex-shrink:0;}
+.pcard-details{font-size:11px;color:var(--text2);display:flex;flex-direction:column;gap:3px;}
+.pcard-detail-row{display:flex;gap:6px;}
+.pcard-detail-label{font-weight:600;min-width:60px;}
+
+/* ORG CHART */
+.org-chart{overflow-x:auto;padding:20px 0;}
+.org-level{display:flex;justify-content:center;gap:16px;margin-bottom:8px;position:relative;}
+.org-level::before{content:'';position:absolute;top:-20px;left:50%;width:1px;height:20px;background:var(--border2);}
+.org-node{background:var(--bg);border:1px solid var(--border2);border-radius:var(--r);padding:10px 14px;text-align:center;min-width:120px;cursor:pointer;transition:border-color .12s;}
+.org-node:hover{border-color:var(--navy-mid);}
+.org-node-name{font-size:12px;font-weight:600;}
+.org-node-role{font-size:10px;color:var(--text2);margin-top:2px;}
+.org-connector{display:flex;justify-content:center;height:20px;}
+.org-connector-line{width:1px;background:var(--border2);}
+.org-children{display:flex;justify-content:center;gap:16px;position:relative;}
+.org-children::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:var(--border2);}
+
+/* MEETINGS */
+.mcard{background:var(--bg);border:1px solid var(--border);border-radius:var(--rl);padding:18px 20px;margin-bottom:12px;}
+.mcard-title{font-size:14px;font-weight:600;margin-bottom:4px;}
+.mcard-meta{font-size:12px;color:var(--text2);margin-bottom:12px;}
+.recurring-badge{font-size:10px;padding:2px 8px;border-radius:20px;background:var(--navy-light);color:var(--navy);font-weight:600;margin-left:8px;}
+.impromptu-badge{font-size:10px;padding:2px 8px;border-radius:20px;background:#FAEEDA;color:#854F0B;font-weight:600;margin-left:8px;}
+.meeting-notes-area{background:var(--bg2);border-radius:var(--r);padding:12px;margin-top:10px;font-size:12.5px;color:var(--text2);line-height:1.6;}
+.tz-badge{font-size:10px;padding:2px 7px;border-radius:20px;background:#E1F5EE;color:#085041;font-weight:600;margin-left:6px;}
+
+/* CHAT PANEL */
+.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 112px);}
+.chat-msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding-bottom:16px;}
+.msg{max-width:82%;padding:12px 16px;border-radius:var(--rl);font-size:13px;line-height:1.6;}
+.msg.user{background:var(--navy-dark);color:white;align-self:flex-end;border-bottom-right-radius:4px;}
+.msg.ai{background:var(--bg);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:4px;}
+.msg.sys{background:var(--navy-dark);color:#85B7EB;align-self:flex-start;font-size:12.5px;border-bottom-left-radius:4px;}
+.chat-footer{padding-top:14px;border-top:1px solid var(--border);}
+.chat-sugs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.sug{font-size:11.5px;padding:5px 13px;border-radius:20px;border:1px solid var(--border2);cursor:pointer;color:var(--text2);background:var(--bg);font-weight:500;}
+.sug:hover{background:var(--navy-pale);color:var(--navy-dark);border-color:var(--navy-mid);}
+.chat-row{display:flex;gap:10px;align-items:flex-end;}
+.chat-ta{flex:1;padding:11px 15px;border:1px solid var(--border2);border-radius:var(--rl);font-size:13px;background:var(--bg);color:var(--text);font-family:inherit;resize:none;min-height:46px;max-height:120px;}
+.chat-ta:focus{outline:none;border-color:var(--navy-mid);box-shadow:0 0 0 3px rgba(24,95,165,.1);}
+
+/* INLINE AI CHAT */
+.inline-chat{background:var(--navy-pale);border:1px solid #B5D4F4;border-radius:var(--rl);padding:16px;margin-top:14px;}
+.inline-chat-title{font-size:11px;font-weight:600;color:var(--navy);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em;}
+.inline-chat-msgs{max-height:200px;overflow-y:auto;margin-bottom:10px;display:flex;flex-direction:column;gap:8px;}
+.inline-msg{font-size:12.5px;padding:8px 12px;border-radius:var(--r);line-height:1.5;}
+.inline-msg.user{background:var(--navy-dark);color:white;align-self:flex-end;max-width:80%;}
+.inline-msg.ai{background:var(--bg);border:1px solid var(--border);align-self:flex-start;max-width:90%;}
+.inline-chat-row{display:flex;gap:8px;}
+.inline-chat-input{flex:1;padding:8px 12px;border:1px solid var(--border2);border-radius:var(--r);font-size:12.5px;background:var(--bg);color:var(--text);font-family:inherit;}
+.inline-chat-input:focus{outline:none;border-color:var(--navy-mid);}
+
+.ai-out{background:var(--navy-pale);border:1px solid #B5D4F4;border-radius:var(--r);padding:14px 16px;margin-top:12px;font-size:13px;color:var(--navy);line-height:1.6;display:none;}
+.ai-out.on{display:block;}
+
+/* DECISIONS */
+.decision-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--rl);padding:16px;margin-bottom:10px;}
+.decision-cat{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;}
+
+/* COMPETITIVE */
+.comp-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--rl);padding:16px;margin-bottom:10px;}
+.comp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;}
+.comp-stat{background:var(--bg2);border-radius:var(--r);padding:10px;text-align:center;}
+
+/* REPORTS */
+.report-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;border-bottom:1px solid var(--border);}
+.report-row:last-child{border-bottom:none;}
+.saved-report{background:var(--bg2);border-radius:var(--r);padding:14px;margin-bottom:8px;cursor:pointer;}
+
+/* WEEKLY REVIEW */
+.energy-btn{width:40px;height:40px;border-radius:var(--r);border:1.5px solid var(--border2);background:var(--bg);cursor:pointer;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .1s;}
+.energy-btn.active{background:var(--navy-dark);color:white;border-color:var(--navy-dark);}
+
+/* SETTINGS */
+.vertical-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:4px 10px;border-radius:6px;background:var(--bg2);border:1px solid var(--border2);margin:3px;cursor:pointer;font-weight:500;}
+.vertical-tag:hover{background:#FFF0F0;border-color:var(--red);color:var(--red);}
+.settings-section{background:var(--bg);border:1px solid var(--border);border-radius:var(--rl);padding:20px;margin-bottom:16px;}
+.settings-title{font-size:14px;font-weight:600;margin-bottom:16px;}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.settings-row:last-child{border-bottom:none;}
+.settings-label{font-weight:500;}
+.settings-sub{font-size:11px;color:var(--text2);margin-top:2px;}
+.toggle{width:40px;height:22px;border-radius:11px;background:var(--border2);cursor:pointer;position:relative;transition:background .2s;}
+.toggle.on{background:var(--green);}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:white;transition:left .2s;}
+.toggle.on::after{left:21px;}
+
+/* MODALS */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:20px;}
+.overlay.open{display:flex;}
+.modal{background:var(--bg);border-radius:var(--rxl);padding:26px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;}
+.modal-title{font-size:17px;font-weight:700;letter-spacing:-.02em;margin-bottom:20px;}
+.fg{margin-bottom:14px;}
+.fl{font-size:10.5px;font-weight:600;color:var(--text2);margin-bottom:5px;display:block;text-transform:uppercase;letter-spacing:.07em;}
+.fi{width:100%;padding:9px 13px;border:1px solid var(--border2);border-radius:var(--r);font-size:13px;background:var(--bg);color:var(--text);font-family:inherit;}
+.fi:focus{outline:none;border-color:var(--navy-mid);box-shadow:0 0 0 3px rgba(24,95,165,.1);}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;}
+.modal-divider{height:1px;background:var(--border);margin:16px 0;}
+
+.menu-btn{display:none;background:none;border:none;font-size:22px;cursor:pointer;color:var(--text);padding:4px;}
+.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:90;}
+.mob-overlay.on{display:block;}
+@media(max-width:768px){
+  .sidebar{position:fixed;left:-240px;top:0;bottom:0;z-index:100;transition:left .25s;box-shadow:4px 0 24px rgba(0,0,0,.15);}
+  .sidebar.open{left:0;}.menu-btn{display:block;}
+  .stats-row,.two-col,.charts-2,.people-grid,.kanban,.project-grid,.fr,.fr3{grid-template-columns:1fr 1fr;}
+  .two-col,.charts-2{grid-template-columns:1fr;}
+  .score-hero{flex-direction:column;}.ng-hero{flex-direction:column;gap:16px;}
+  .content{padding:16px;}.topbar{padding:0 16px;}.topbar-date{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="setup" id="setup-screen">
+  <div class="setup-box">
+    <div class="setup-logo"><div class="setup-mark"><svg viewBox="0 0 16 16"><path d="M8 2L14 13H2L8 2Z"/></svg></div><span class="setup-title">Salus HQ</span></div>
+    <p class="setup-desc">Welcome back. Paste your Anthropic API key to activate all AI features. It's stored only on your device.</p>
+    <div class="setup-step"><strong>Step 1:</strong> Go to <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys → Create Key</div>
+    <div class="setup-step"><strong>Step 2:</strong> Copy the key (starts with sk-ant-) and paste below</div>
+    <div class="setup-input-row">
+      <input class="setup-input" id="api-key-input" type="password" placeholder="sk-ant-...">
+      <button class="btn btn-navy" onclick="saveApiKey()">Start →</button>
+    </div>
+    <div class="setup-err" id="setup-err">Please enter a valid API key (starts with sk-ant-)</div>
+    <p style="font-size:11px;color:var(--text2);margin-top:12px">Key stored locally on your device only. Update anytime in Settings.</p>
+  </div>
+</div>
+
+<div class="mob-overlay" id="mob-overlay" onclick="closeSidebar()"></div>
+
+<div class="app" id="main-app" style="display:none">
+  <nav class="sidebar" id="sidebar">
+    <div class="logo">
+      <div class="logo-row"><div class="logo-mark"><svg viewBox="0 0 16 16"><path d="M8 2L14 13H2L8 2Z"/></svg></div><span class="logo-name" id="sidebar-co-name">Salus HQ</span></div>
+      <div class="logo-sub" id="sidebar-gm-name">GM Command Centre</div>
+    </div>
+    <div class="nav">
+      <div class="nsec">Overview</div>
+      <div class="ni active" onclick="go('dashboard',this)"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>Dashboard</div>
+      <div class="ni" onclick="go('quickentry',this)"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h12v2H2zm0 4h8v2H2zm0 4h5v2H2z"/></svg>Quick entry <span class="ni-new">AI</span></div>
+      <div class="ni" onclick="go('tasks',this)"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 4h12v1.5H2zm0 3.5h12V9H2zm0 3.5h7v1.5H2z"/></svg>Tasks <span class="ni-badge" id="od-badge" style="display:none">0</span></div>
+      <div class="ni" onclick="go('brain',this)"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="5.5" opacity=".25"/><circle cx="8" cy="8" r="2.5"/><path d="M8 2.5v2M8 11.5v2M2.5 8h2M11.5 8h2" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>Company Brain</div>
+      <div class="nsec">Growth</div>
+      <div class="ni coach" onclick="go('coaching',this)"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5l2.2 4.5 5 .7-3.6 3.5.85 4.9L8 12.8l-4.45 2.3.85-4.9L.8 6.7l5-.7z"/></svg>Coaching</div>
+      <div class="ni ng" onclick="go('projects',this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="1.5" width="6" height="6" rx="1"/><rect x="8.5" y="1.5" width="6" height="6" rx="1"/><rect x="1.5" y="8.5" width="6" height="6" rx="1"/><rect x="8.5" y="8.5" width="6" height="6" rx="1"/></svg>Projects</div>
+      <div class="ni" onclick="go('competitive',this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 13V6l4-4 4 4v7M6 13V9h4v4"/><path d="M10 6V3h4v10h-4"/></svg>Competitive Intel</div>
+      <div class="nsec">Teams</div>
+      <div class="ni" onclick="go('people',this)"><svg viewBox="0 0 16 16" fill="currentColor"><circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-2.76 2.24-5 5-5s5 2.24 5 5" stroke="currentColor" stroke-width="1.2" fill="none"/><circle cx="12" cy="5.5" r="2"/><path d="M10.5 13c0-1.6.65-3.05 1.7-4.1" stroke="currentColor" stroke-width="1.1" fill="none"/></svg>People</div>
+      <div class="ni" onclick="go('meetings',this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="3.5" width="13" height="11" rx="2"/><path d="M5 1.5v3M11 1.5v3M1.5 7.5h13"/></svg>Meetings</div>
+      <div class="nsec">Reflection</div>
+      <div class="ni" onclick="go('weeklyreview',this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>Weekly Review</div>
+      <div class="ni" onclick="go('decisions',this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M3 3h10v10H3z" rx="1"/><path d="M6 6h4M6 9h2"/></svg>Decision Log</div>
+      <div class="nsec">Reports</div>
+      <div class="ni" onclick="go('reports',this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2.5" y="1.5" width="11" height="13" rx="1.5"/><path d="M5 5.5h6M5 8.5h6M5 11.5h4"/></svg>Reports</div>
+      <div class="nsec">Settings</div>
+      <div class="ni" onclick="go('settings',this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg>Settings</div>
+    </div>
+  </nav>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-l">
+        <button class="menu-btn" onclick="openSidebar()">☰</button>
+        <span class="topbar-title" id="tb-title">Good morning</span>
+        <span class="topbar-date" id="tb-date"></span>
+      </div>
+      <div class="topbar-r">
+        <button class="btn" id="add-btn" onclick="openM('add-task')" style="display:none">+ Add task</button>
+        <button class="btn btn-navy" id="ai-btn" onclick="handleAI()">AI brief ↗</button>
+      </div>
+    </header>
+    <main class="content">
+
+      <!-- DASHBOARD -->
+      <div class="view active" id="view-dashboard">
+        <div class="ai-banner" id="ai-banner"><div class="ai-banner-head"><span class="ai-tag">AI</span><span class="ai-banner-title">Daily briefing</span></div><div class="ai-banner-body" id="ai-banner-body"></div></div>
+        <div class="loading" id="loading-brief">Generating your briefing...</div>
+        <div class="stats-row">
+          <div class="stat blue"><div class="stat-label">Open tasks</div><div class="stat-value" id="s-open">0</div><div class="stat-sub">all verticals</div></div>
+          <div class="stat red"><div class="stat-label">Due this week</div><div class="stat-value" id="s-due" style="color:var(--red)">0</div><div class="stat-sub" id="s-od-sub"></div></div>
+          <div class="stat green"><div class="stat-label">Completed</div><div class="stat-value" id="s-done" style="color:var(--green)">0</div><div class="stat-sub" id="s-rate"></div></div>
+          <div class="stat purple"><div class="stat-label">GM score</div><div class="stat-value" id="s-gm" style="color:var(--purple)">--</div><div class="stat-sub">this week</div></div>
+        </div>
+        <div class="perf-strip">
+          <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;font-weight:600">Performance this week</span><button class="btn btn-sm" onclick="go('coaching',document.querySelectorAll('.ni')[4])">Full coaching →</button></div>
+          <div class="perf-grid" id="perf-grid"></div>
+        </div>
+        <div class="two-col">
+          <div class="card"><div class="card-head"><span class="card-title">Priority tasks</span><span class="card-pill" id="pri-count">0 high</span></div><div id="priority-list"></div></div>
+          <div class="col-stack">
+            <div class="card"><div class="card-head"><span class="card-title">Alerts</span></div><div id="alerts-list"></div></div>
+            <div class="card"><div class="card-head"><span class="card-title">By vertical</span></div><div id="vbars"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUICK ENTRY -->
+      <div class="view" id="view-quickentry">
+        <div class="chat-wrap">
+          <div class="chat-msgs" id="chat-msgs">
+            <div class="msg sys">Hi — I know everything about Salus: 12 months of meetings, Sherif, Be Fit, delivery, Not Guilty, and all April open items. Talk naturally — I'll file tasks, update people, log decisions. Try: "just had a call with Ghanem" or "what should I focus on today?"</div>
+          </div>
+          <div class="chat-footer">
+            <div class="chat-sugs">
+              <div class="sug" onclick="useSug(this)">What should I focus on today?</div>
+              <div class="sug" onclick="useSug(this)">Draft a CEO update</div>
+              <div class="sug" onclick="useSug(this)">How is Sherif doing?</div>
+              <div class="sug" onclick="useSug(this)">Not Guilty status</div>
+              <div class="sug" onclick="useSug(this)">Prep me for tomorrow's meeting</div>
+              <div class="sug" onclick="useSug(this)">Log a decision I just made</div>
+            </div>
+            <div class="chat-row">
+              <textarea class="chat-ta" id="chat-in" placeholder="Type anything — updates, questions, tasks, notes, decisions..." rows="2" onkeydown="chatKey(event)"></textarea>
+              <button class="btn btn-navy" onclick="sendChat()" style="height:46px;padding:0 18px">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TASKS -->
+      <div class="view" id="view-tasks">
+        <div class="tabs"><div class="tab active" onclick="switchTV('list',this)">List</div><div class="tab" onclick="switchTV('kanban',this)">Kanban</div></div>
+        <div class="filter-row" id="filter-row"></div>
+        <div id="tv-list"><table class="tbl"><thead><tr><th style="width:32px"></th><th>Task</th><th>Vertical</th><th>Assigned to</th><th>Priority</th><th>Due</th><th>Status</th></tr></thead><tbody id="tbl-body"></tbody></table></div>
+        <div id="tv-kanban" style="display:none"><div class="kanban" id="kanban"></div></div>
+      </div>
+
+      <!-- BRAIN -->
+      <div class="view" id="view-brain">
+        <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+          <button class="btn btn-navy" onclick="openM('add-brain')">+ Add entry</button>
+          <button class="btn" onclick="showBrainSection('all')" id="bsec-all">All</button>
+          <button class="btn" onclick="showBrainSection('meeting')" id="bsec-meeting">Meetings</button>
+          <button class="btn" onclick="showBrainSection('financial')" id="bsec-financial">Financial</button>
+          <button class="btn" onclick="showBrainSection('competitive')" id="bsec-competitive">Competitive</button>
+          <button class="btn" onclick="showBrainSection('other')" id="bsec-other">Other</button>
+        </div>
+        <div class="brain-status">
+          <div style="font-size:13px;font-weight:600;color:white;margin-bottom:6px">Brain loaded — 12 months of Salus history</div>
+          <div style="font-size:12px;color:#85B7EB;line-height:1.6">Apr 2026: weekly status (x3), marketing meetings (x2), delivery meeting, Sherif 1-on-1, Faris/Masarra, Ball District, Be Fit partnership. Full archive May 2025–Apr 2026 active.</div>
+        </div>
+        <div class="sec-title">Memory entries</div>
+        <div id="brain-list"></div>
+      </div>
+
+      <!-- COACHING -->
+      <div class="view" id="view-coaching">
+        <div class="ai-coach-box" id="ai-coach-box"><div class="ai-banner-head"><span class="ai-tag">AI</span><span class="ai-banner-title">Coaching report</span></div><div class="ai-coach-body" id="ai-coach-text"></div></div>
+        <div class="loading" id="loading-coach">Analysing your patterns...</div>
+        <div class="score-hero">
+          <canvas id="score-ring" width="100" height="100" role="img" aria-label="GM score"></canvas>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:700;margin-bottom:4px">GM leadership score</div>
+            <div style="font-size:13px;color:var(--text2);margin-bottom:12px" id="score-desc">Based on task completion, people management and delivery.</div>
+            <div class="score-pills" id="score-pills"></div>
+          </div>
+        </div>
+        <div class="charts-2">
+          <div class="card"><div class="card-title" style="margin-bottom:4px">Completion trend</div><div style="font-size:11px;color:var(--text2);margin-bottom:14px">Weekly tasks done (Sun–Thu)</div><div style="position:relative;height:165px"><canvas id="c-chart"></canvas></div></div>
+          <div class="card"><div class="card-title" style="margin-bottom:4px">Attention by vertical</div><div style="font-size:11px;color:var(--text2);margin-bottom:14px">Open tasks split</div><div style="position:relative;height:165px"><canvas id="v-chart"></canvas></div></div>
+        </div>
+        <div class="raise-strip">
+          <div style="font-size:13px;font-weight:600;color:var(--purple-dark);margin-bottom:12px">Raise conversation tracker — your documented impact</div>
+          <div id="raise-list"></div>
+          <button class="btn btn-sm btn-purple" onclick="runAI('raise-update')" style="margin-top:8px">Update this week's entry ↗</button>
+        </div>
+        <div class="card" style="margin-bottom:18px"><div class="card-head"><span class="card-title">Bottleneck detector</span></div><div id="bottlenecks"></div></div>
+        <div class="sec-title">Coaching insights</div>
+        <div id="insights"></div>
+      </div>
+
+      <!-- PROJECTS -->
+      <div class="view" id="view-projects">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+          <div>
+            <div style="font-size:20px;font-weight:700;letter-spacing:-.02em">Projects</div>
+            <div style="font-size:13px;color:var(--text2)">Campaigns, events, shoots, giveaways, partnerships and more</div>
+          </div>
+          <button class="btn btn-navy" onclick="openM('add-project')">+ New project</button>
+        </div>
+        <div class="filter-row" id="project-filter-row"></div>
+        <div class="project-grid" id="project-grid"></div>
+      </div>
+
+      <!-- COMPETITIVE -->
+      <div class="view" id="view-competitive">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+          <div class="sec-title" style="margin:0">Competitor profiles</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-navy btn-sm" onclick="runAI('comp-overview')">AI market analysis ↗</button>
+            <button class="btn btn-sm" onclick="openM('add-competitor')">+ Add competitor</button>
+          </div>
+        </div>
+        <div class="loading" id="loading-comp">Analysing...</div>
+        <div class="ai-out" id="comp-ai-out"></div>
+        <div id="comp-list"></div>
+      </div>
+
+      <!-- PEOPLE -->
+      <div class="view" id="view-people">
+        <div class="tabs"><div class="tab active" onclick="switchPeopleView('grid',this)">Grid</div><div class="tab" onclick="switchPeopleView('org',this)">Org chart</div></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:18px">
+          <button class="btn btn-sm" onclick="openM('add-person')">+ Add person</button>
+        </div>
+        <div id="people-grid-view">
+          <div class="sec-title">Team & partners</div>
+          <div class="people-grid" id="people-grid"></div>
+        </div>
+        <div id="people-org-view" style="display:none">
+          <div class="sec-title">Organisation chart</div>
+          <div class="org-chart" id="org-chart"></div>
+        </div>
+      </div>
+
+      <!-- MEETINGS -->
+      <div class="view" id="view-meetings">
+        <div style="display:flex;gap:10px;justify-content:space-between;align-items:center;margin-bottom:18px">
+          <div class="sec-title" style="margin:0">Meetings</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-sm" onclick="openM('add-meeting')">+ Add meeting</button>
+            <button class="btn btn-navy btn-sm" onclick="runAI('weekly-prep')">Weekly prep ↗</button>
+          </div>
+        </div>
+        <div class="loading" id="loading-meetings">Generating prep...</div>
+        <div class="ai-out" id="meetings-ai-out"></div>
+        <div class="sec-title" style="margin-top:8px">Recurring meetings</div>
+        <div id="recurring-list"></div>
+        <div class="sec-title" style="margin-top:20px">One-off meetings</div>
+        <div id="impromptu-list"></div>
+      </div>
+
+      <!-- WEEKLY REVIEW -->
+      <div class="view" id="view-weeklyreview">
+        <div style="background:var(--navy-dark);border-radius:var(--rl);padding:22px;margin-bottom:18px">
+          <div style="font-size:16px;font-weight:700;color:white;margin-bottom:4px">Weekly review</div>
+          <div style="font-size:12px;color:#85B7EB">Saudi work week: Sunday – Thursday. Take 5 minutes to reflect.</div>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title" style="margin-bottom:16px">This week's review</div>
+          <div class="fg"><label class="fl">How was your week? (1–5)</label><div style="display:flex;gap:8px;margin-top:4px" id="week-rating-btns"><div class="energy-btn" onclick="setRating(1,this)">1</div><div class="energy-btn" onclick="setRating(2,this)">2</div><div class="energy-btn" onclick="setRating(3,this)">3</div><div class="energy-btn" onclick="setRating(4,this)">4</div><div class="energy-btn" onclick="setRating(5,this)">5</div></div></div>
+          <div class="fg"><label class="fl">What did you accomplish?</label><textarea class="fi" id="review-wins" rows="2" placeholder="Key wins, decisions made, things unblocked..."></textarea></div>
+          <div class="fg"><label class="fl">What didn't get done? Why?</label><textarea class="fi" id="review-missed" rows="2" placeholder="Honest reflection..."></textarea></div>
+          <div class="fg"><label class="fl">Focus for next week (top 3)</label><textarea class="fi" id="review-next" rows="2" placeholder="What matters most Sunday–Thursday..."></textarea></div>
+          <div class="fg"><label class="fl">Energy & capacity (1–5)</label><div style="display:flex;gap:8px;margin-top:4px" id="energy-btns"><div class="energy-btn" onclick="setEnergy(1,this)">1</div><div class="energy-btn" onclick="setEnergy(2,this)">2</div><div class="energy-btn" onclick="setEnergy(3,this)">3</div><div class="energy-btn" onclick="setEnergy(4,this)">4</div><div class="energy-btn" onclick="setEnergy(5,this)">5</div></div></div>
+          <div style="display:flex;gap:10px"><button class="btn btn-navy" onclick="saveWeeklyReview()">Save review</button><button class="btn btn-purple" onclick="runAI('weekly-summary')">AI summary ↗</button></div>
+          <div class="loading" id="loading-review">Generating...</div>
+          <div class="ai-out" id="review-ai-out"></div>
+        </div>
+        <div class="sec-title">Past reviews</div>
+        <div id="past-reviews"></div>
+      </div>
+
+      <!-- DECISIONS -->
+      <div class="view" id="view-decisions">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+          <div class="sec-title" style="margin:0">Decision log</div>
+          <button class="btn btn-navy btn-sm" onclick="openM('add-decision')">+ Log decision</button>
+        </div>
+        <div class="filter-row" id="decision-filter-row"></div>
+        <div id="decision-list"></div>
+      </div>
+
+      <!-- REPORTS -->
+      <div class="view" id="view-reports">
+        <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+          <button class="btn btn-navy" onclick="runAI('weekly')">Weekly report ↗</button>
+          <button class="btn btn-navy" onclick="runAI('ceo')">CEO update ↗</button>
+          <button class="btn btn-purple" onclick="runAI('raise-report')">Raise summary ↗</button>
+        </div>
+        <div class="loading" id="loading-report">Generating...</div>
+        <div class="ai-out" id="report-out"></div>
+        <div class="card" style="margin-top:16px"><div class="card-head"><span class="card-title">This week at a glance</span></div><div id="report-body"></div></div>
+        <div class="sec-title" style="margin-top:20px">Saved CEO updates</div>
+        <div id="saved-reports"></div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="view" id="view-settings">
+        <div class="settings-section">
+          <div class="settings-title">Identity</div>
+          <div class="fr">
+            <div class="fg"><label class="fl">Your name</label><input class="fi" id="set-name" placeholder="e.g. Sola Alonge"></div>
+            <div class="fg"><label class="fl">Your title</label><input class="fi" id="set-title" placeholder="e.g. General Manager"></div>
+          </div>
+          <div class="fr">
+            <div class="fg"><label class="fl">Company name</label><input class="fi" id="set-company" placeholder="e.g. Salus"></div>
+            <div class="fg"><label class="fl">Your timezone</label><select class="fi" id="set-tz"><option value="Asia/Dubai">Dubai (UTC+4)</option><option value="Asia/Riyadh">Riyadh (UTC+3)</option><option value="Europe/London">London (UTC+0/+1)</option><option value="America/New_York">New York (UTC-5/-4)</option></select></div>
+          </div>
+          <button class="btn btn-navy" onclick="saveIdentitySettings()">Save</button>
+          <div class="ai-out" id="settings-msg" style="margin-top:10px"></div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-title">API Key</div>
+          <div class="fg"><label class="fl">Anthropic API Key</label><input class="fi" id="settings-api-key" type="password" placeholder="sk-ant-..."></div>
+          <button class="btn btn-navy" onclick="updateApiKey()">Update key</button>
+        </div>
+        <div class="settings-section">
+          <div class="settings-title">Manage verticals</div>
+          <div id="verticals-list" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px"></div>
+          <div style="display:flex;gap:8px">
+            <input class="fi" id="new-vertical-input" placeholder="New vertical name..." style="flex:1">
+            <button class="btn btn-navy" onclick="addVertical()">Add</button>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-title">Manage project types</div>
+          <div id="project-types-list" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px"></div>
+          <div style="display:flex;gap:8px">
+            <input class="fi" id="new-project-type-input" placeholder="New project type..." style="flex:1">
+            <button class="btn btn-navy" onclick="addProjectType()">Add</button>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-title">Preferences</div>
+          <div class="settings-row"><div><div class="settings-label">Work week</div><div class="settings-sub">Sunday – Thursday (Saudi)</div></div><div style="font-size:12px;color:var(--green);font-weight:600">Active</div></div>
+          <div class="settings-row"><div><div class="settings-label">Auto-generate weekly brief</div><div class="settings-sub">Show AI briefing on dashboard load</div></div><div class="toggle" id="toggle-brief" onclick="togglePref('autoBrief',this)"></div></div>
+          <div class="settings-row"><div><div class="settings-label">Raise tracker</div><div class="settings-sub">Track weekly impact for raise conversation</div></div><div class="toggle on" id="toggle-raise" onclick="togglePref('raiseTracker',this)"></div></div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-title" style="color:var(--red)">Danger zone</div>
+          <button class="btn btn-red btn-sm" onclick="clearAllData()">Clear all data</button>
+          <p style="font-size:12px;color:var(--text2);margin-top:8px">Deletes all tasks, people, brain entries and settings.</p>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="overlay" id="mo-add-task">
+  <div class="modal">
+    <div class="modal-title">New task</div>
+    <div class="fg"><label class="fl">Title</label><input class="fi" id="nt-t" placeholder="What needs to get done?"></div>
+    <div class="fg"><label class="fl">Description</label><textarea class="fi" id="nt-d" rows="2" placeholder="Optional details..."></textarea></div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Vertical <span style="color:var(--navy-mid);cursor:pointer;font-size:10px" onclick="openM('add-vertical-quick')">(+ new)</span></label><select class="fi" id="nt-v"></select></div>
+      <div class="fg"><label class="fl">Priority</label><select class="fi" id="nt-p"><option>High</option><option>Medium</option><option>Low</option></select></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Due date</label><input type="date" class="fi" id="nt-due"></div>
+      <div class="fg"><label class="fl">Assign to</label><select class="fi" id="nt-assign"><option value="">Me</option></select></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Output type</label><select class="fi" id="nt-o"><option>Action</option><option>Email draft</option><option>Report</option><option>Decision</option><option>Meeting</option><option>Delegation</option></select></div>
+      <div class="fg"><label class="fl">Tags</label><input class="fi" id="nt-tags" placeholder="e.g. urgent, client"></div>
+    </div>
+    <div class="modal-actions"><button class="btn" onclick="closeM('add-task')">Cancel</button><button class="btn btn-navy" onclick="addTask()">Add task</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="mo-add-vertical-quick">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-title">Create vertical</div>
+    <div class="fg"><label class="fl">Name</label><input class="fi" id="qv-name" placeholder="e.g. Finance, UAE, Product..."></div>
+    <div class="modal-actions"><button class="btn" onclick="closeM('add-vertical-quick')">Cancel</button><button class="btn btn-navy" onclick="addVerticalQuick()">Create</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="mo-add-brain">
+  <div class="modal">
+    <div class="modal-title">Feed the brain</div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Source type</label><select class="fi" id="nb-type"><option>Meeting notes</option><option>Email</option><option>WhatsApp</option><option>Financial data</option><option>Sales figures</option><option>Competitive intel</option><option>PDF / Doc</option><option>Other</option></select></div>
+      <div class="fg"><label class="fl">Vertical</label><select class="fi" id="nb-v"></select></div>
+    </div>
+    <div class="fg"><label class="fl">Title</label><input class="fi" id="nb-title" placeholder="e.g. Marketing sync — 15 Apr"></div>
+    <div class="fg"><label class="fl">Content</label><textarea class="fi" id="nb-content" rows="6" placeholder="Paste meeting notes, financial data, WhatsApp messages, competitive info..."></textarea></div>
+    <div class="loading" id="loading-brain">Extracting tasks...</div>
+    <div class="ai-out" id="brain-out"></div>
+    <div class="modal-actions"><button class="btn" onclick="closeM('add-brain')">Cancel</button><button class="btn" onclick="saveBrain()">Save only</button><button class="btn btn-navy" onclick="extractBrain()">Save + extract tasks ↗</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="mo-add-meeting">
+  <div class="modal">
+    <div class="modal-title">Add meeting</div>
+    <div class="fg"><label class="fl">Meeting name</label><input class="fi" id="nm-name" placeholder="e.g. Marketing weekly sync"></div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Type</label><select class="fi" id="nm-type" onchange="toggleMeetingType()"><option value="recurring">Recurring</option><option value="impromptu">One-off</option></select></div>
+      <div class="fg"><label class="fl">Vertical</label><select class="fi" id="nm-vertical"></select></div>
+    </div>
+    <div id="nm-recurring-fields">
+      <div class="fr">
+        <div class="fg"><label class="fl">Day (Sun–Thu)</label><select class="fi" id="nm-day"><option>Sunday</option><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option></select></div>
+        <div class="fg"><label class="fl">Time</label><input class="fi" id="nm-time" placeholder="e.g. 9:00 AM"></div>
+      </div>
+    </div>
+    <div id="nm-oneoff-fields" style="display:none">
+      <div class="fg"><label class="fl">Date</label><input type="date" class="fi" id="nm-date"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Timezone</label><select class="fi" id="nm-tz"><option value="Asia/Dubai">Dubai (UTC+4)</option><option value="Asia/Riyadh">Riyadh (UTC+3)</option><option value="Europe/London">London</option><option value="America/New_York">New York</option></select></div>
+      <div class="fg"><label class="fl">Participants</label><input class="fi" id="nm-participants" placeholder="e.g. Sara, Raghad"></div>
+    </div>
+    <div class="fg"><label class="fl">Agenda / standing notes</label><textarea class="fi" id="nm-notes" rows="3" placeholder="What's this meeting about?"></textarea></div>
+    <div class="modal-actions"><button class="btn" onclick="closeM('add-meeting')">Cancel</button><button class="btn btn-navy" onclick="addMeeting()">Add meeting</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="mo-meeting-notes">
+  <div class="modal">
+    <div class="modal-title" id="meeting-notes-title">Add meeting notes</div>
+    <div class="fg"><label class="fl">Meeting date</label><input type="date" class="fi" id="mn-date"></div>
+    <div class="fg"><label class="fl">Notes & outcomes</label><textarea class="fi" id="mn-notes" rows="5" placeholder="What was discussed? Decisions made? Action items?"></textarea></div>
+    <div class="fg"><label class="fl">Follow-up tasks (one per line, start with -)</label><textarea class="fi" id="mn-tasks" rows="3" placeholder="- Follow up with X about Y&#10;- Send report to Z"></textarea></div>
+    <div class="modal-actions"><button class="btn" onclick="closeM('meeting-notes')">Cancel</button><button class="btn btn-navy" onclick="saveMeetingNotes()">Save notes</button></div>
+    <input type="hidden" id="mn-meeting-id">
+  </div>
+</div>
+
+<div class="overlay" id="mo-add-person">
+  <div class="modal">
+    <div class="modal-title">Add person</div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Full name</label><input class="fi" id="np-name" placeholder="Full name"></div>
+      <div class="fg"><label class="fl">Type</label><select class="fi" id="np-type"><option value="internal">Internal (team)</option><option value="external">External (partner)</option></select></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Job title</label><input class="fi" id="np-role" placeholder="e.g. Marketing Executive"></div>
+      <div class="fg"><label class="fl">Department / vertical</label><select class="fi" id="np-team"></select></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Reports to</label><input class="fi" id="np-reports-to" placeholder="e.g. Sola Alonge"></div>
+      <div class="fg"><label class="fl">Company (external)</label><input class="fi" id="np-company" placeholder="e.g. Masarra"></div>
+    </div>
+    <div class="fg"><label class="fl">Job description / responsibilities</label><textarea class="fi" id="np-jd" rows="3" placeholder="Key responsibilities, what they own, what you rely on them for..."></textarea></div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Contract type</label><select class="fi" id="np-contract"><option>Full-time</option><option>Part-time</option><option>Contractor</option><option>Agency</option><option>Freelance</option><option>Partner</option></select></div>
+      <div class="fg"><label class="fl">Start date</label><input type="date" class="fi" id="np-start"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Birthday</label><input type="date" class="fi" id="np-bday"></div>
+      <div class="fg"><label class="fl">Morale / relationship</label><select class="fi" id="np-morale"><option value="great">Great</option><option value="good">Good</option><option value="neutral">Neutral</option><option value="low">Low / At risk</option></select></div>
+    </div>
+    <div class="fg"><label class="fl">Personal notes (interests, goals, things to remember)</label><textarea class="fi" id="np-notes" rows="2" placeholder="What makes them tick? What motivates them?"></textarea></div>
+    <div class="modal-actions"><button class="btn" onclick="closeM('add-person')">Cancel</button><button class="btn btn-navy" onclick="addPerson()">Add person</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="mo-add-project">
+  <div class="modal">
+    <div class="modal-title">New project</div>
+    <div class="fg"><label class="fl">Project name</label><input class="fi" id="nproj-name" placeholder="e.g. Ramadan campaign 2026"></div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Type <span style="color:var(--navy-mid);cursor:pointer;font-size:10px" onclick="openM('add-projtype-quick')">(+ new)</span></label><select class="fi" id="nproj-type"></select></div>
+      <div class="fg"><label class="fl">Vertical</label><select class="fi" id="nproj-vertical"></select></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Status</label><select class="fi" id="nproj-status"><option>Planning</option><option>Active</option><option>On hold</option><option>Completed</option><option>Cancelled</option></select></div>
+      <div class="fg"><label class="fl">Priority</label><select class="fi" id="nproj-priority"><option>High</option><option>Medium</option><option>Low</option></select></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Start date</label><input type="date" class="fi" id="nproj-start"></div>
+      <div class="fg"><label class="fl">Deadline</label><input type="date" class="fi" id="nproj-deadline"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Budget (SAR)</label><input class="fi" id="nproj-budget" placeholder="e.g. 50000" type="number"></div>
+      <div class="fg"><label class="fl">Lead / owner</label><select class="fi" id="nproj-lead"><option value="">Me</option></select></div>
+    </div>
+    <div class="fg"><label class="fl">Description & goals</label><textarea class="fi" id="nproj-desc" rows="3" placeholder="What is this project trying to achieve?"></textarea></div>
+    <div class="modal-actions"><button class="btn" onclick="closeM('add-project')">Cancel</button><button class="btn btn-navy" onclick="addProject()">Create project</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="mo-add-projtype-quick">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-title">New project type</div>
+    <div class="fg"><label class="fl">Type name</label><input class="fi" id="qpt-name" placeholder="e.g. Giveaway, Event, Shoot..."></div>
+    <div class="modal-actions"><button class="btn" onclick="closeM('add-projtype-quick')">Cancel</button><button class="btn btn-navy" onclick="addProjectTypeQuick()">Create</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="mo-add-decision">
+  <div class="modal">
+    <div class="modal-title">Log a decision</div>
+    <div class="fg"><label class="fl">Decision</label><input class="fi" id="nd-title" placeholder="What did you decide?"></div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Category</label><select class="fi" id="nd-cat"><option>Strategic</option><option>Operational</option><option>People</option><option>Financial</option><option>Product</option><option>Partnership</option></select></div>
+      <div class="fg"><label class="fl">Vertical</label><select class="fi" id="nd-vertical"></select></div>
+    </div>
+    <div class="fg"><label class="fl">Rationale</label><textarea class="fi" id="nd-rationale" rows="3" placeholder="Why this decision? What were the alternatives?"></textarea></div>
+    <div class="fg"><label class="fl">Expected outcome</label><textarea class="fi" id="nd-outcome" rows="2" placeholder="What do you expect to happen?"></textarea></div>
+    <div class="modal-actions"><button class="btn" onclick="closeM('add-decision')">Cancel</button><button class="btn btn-navy" onclick="addDecision()">Log decision</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="mo-add-competitor">
+  <div class="modal">
+    <div class="modal-title">Add competitor</div>
+    <div class="fg"><label class="fl">Name</label><input class="fi" id="nc-name" placeholder="e.g. Kalo, Gymfood"></div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Market</label><select class="fi" id="nc-market"><option>Saudi Arabia</option><option>UAE</option><option>Both</option></select></div>
+      <div class="fg"><label class="fl">Max discount %</label><input class="fi" id="nc-discount" type="number" placeholder="e.g. 30"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Est. monthly revenue</label><input class="fi" id="nc-revenue" placeholder="e.g. 2M SAR"></div>
+      <div class="fg"><label class="fl">Price vs us</label><select class="fi" id="nc-price"><option>Cheaper</option><option>Similar</option><option>More expensive</option></select></div>
+    </div>
+    <div class="fg"><label class="fl">Key observations</label><textarea class="fi" id="nc-notes" rows="3" placeholder="Strategy, recent moves, strengths..."></textarea></div>
+    <div class="modal-actions"><button class="btn" onclick="closeM('add-competitor')">Cancel</button><button class="btn btn-navy" onclick="addCompetitor()">Add</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="mo-task-detail">
+  <div class="modal">
+    <div id="task-detail"></div>
+    <div class="inline-chat" id="task-inline-chat">
+      <div class="inline-chat-title">AI assistant — ask about this task</div>
+      <div class="inline-chat-msgs" id="task-chat-msgs"></div>
+      <div class="inline-chat-row">
+        <input class="inline-chat-input" id="task-chat-input" placeholder="e.g. What are the next steps? Who should I call?" onkeydown="if(event.key==='Enter')sendInlineChat('task')">
+        <button class="btn btn-navy btn-sm" onclick="sendInlineChat('task')">Send</button>
+      </div>
+    </div>
+    <div class="modal-actions"><button class="btn" onclick="closeM('task-detail')">Close</button><button class="btn btn-navy" onclick="runAI('task-steps')">Next steps ↗</button></div>
+    <div class="loading" id="loading-task">Thinking...</div>
+    <div class="ai-out" id="task-out"></div>
+  </div>
+</div>
+
+<div class="overlay" id="mo-person-detail">
+  <div class="modal">
+    <div id="person-detail"></div>
+    <div class="inline-chat" id="person-inline-chat">
+      <div class="inline-chat-title">AI assistant — ask about this person</div>
+      <div class="inline-chat-msgs" id="person-chat-msgs"></div>
+      <div class="inline-chat-row">
+        <input class="inline-chat-input" id="person-chat-input" placeholder="e.g. How should I approach the salary conversation?" onkeydown="if(event.key==='Enter')sendInlineChat('person')">
+        <button class="btn btn-navy btn-sm" onclick="sendInlineChat('person')">Send</button>
+      </div>
+    </div>
+    <div class="modal-actions"><button class="btn" onclick="closeM('person-detail')">Close</button><button class="btn btn-navy" onclick="runAI('person-insight')">Full AI insight ↗</button></div>
+    <div class="loading" id="loading-person">Generating...</div>
+    <div class="ai-out" id="person-out"></div>
+  </div>
+</div>
+
+<div class="overlay" id="mo-project-detail">
+  <div class="modal">
+    <div id="project-detail"></div>
+    <div class="modal-actions"><button class="btn" onclick="closeM('project-detail')">Close</button><button class="btn btn-navy" onclick="runAI('project-brief')">AI project brief ↗</button></div>
+    <div class="loading" id="loading-project">Generating...</div>
+    <div class="ai-out" id="project-out"></div>
+  </div>
+</div>
+
+<script>
+const WORKER='https://gmcommandcentre.verbalemotions.workers.dev';
+const MODEL='claude-sonnet-4-20250514';
+let charts={};
+let currentRating=0,currentEnergy=0,currentMeetingId=null;
+
+const DEFAULT_VERTICALS=['Marketing','BizDev','Kitchen','Delivery','Customer Service','Finance','General Management','Product','People & Culture','Snack Line','Not Guilty','UAE','Personal'];
+const DEFAULT_PROJECT_TYPES=['Campaign','Event','Shoot','Giveaway','Gift','Partnership','Launch','Other'];
+
+const CTX=`You are the AI assistant for Sola Alonge, General Manager of Salus, a meal prep company in Saudi Arabia and UAE.
+IMPORTANT: Saudi work week = Sunday to Thursday.
+COMPANY: Salus meal prep — Jeddah, Riyadh, Dammam, Taif, Mecca. First profitable year 2025 (~410K profit). Target 9M→12M+ SAR. UAE is a separate business entity expanding in parallel.
+BRAND: "Not Guilty" — high protein snack brand. Rami & Sola responsible.
+KEY PEOPLE: Rami Jari (CEO/owner), Sola Alonge (GM), Sherif Youssef (Marketing Exec, HIGH RETENTION RISK, asked for 8K SAR Apr 5), Raghad Alsharqawi (Product/tech), Afnan Muhammed (CS), Miryam Mulla (Finance), Naeem Bhombal (Video), Razan (Design).
+PARTNERSHIPS: Be Fit UAE (protein bars MOQ 200-300 cartons), Faris/Masarra (performance marketing May 1), Ball District (basketball events), Ghanem/Yassin (delivery), Anas (WhatsApp solution).
+APRIL 2026: Delivery window expansion; Be Fit MOQ/flavors; Referral 50 SAR fixed; Subscription 60-day cap; Faris/Masarra May 1; Snack sampling 25-28 Apr; Sherif KPIs+salary; Taif push; Tagnet evaluation; Blog 1-2/week.
+STRATEGY: 30% margin non-negotiable. Reducing discount dependency. Riyadh=growth. Delivery=brand trust. 25% no-voucher rate target.`;
+
+function getKey(){return localStorage.getItem('salus-api-key')||'';}
+
+async function callAI(messages,system){
+  const key=getKey();
+  if(!key)throw new Error('No API key');
+  const body={model:MODEL,max_tokens:1500,messages,_apiKey:key};
+  if(system)body.system=system;
+  const res=await fetch(WORKER,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||'API error '+res.status);}
+  const data=await res.json();
+  return data.content?.find(c=>c.type==='text')?.text||'No response.';
+}
+
+function saveApiKey(){
+  const key=document.getElementById('api-key-input').value.trim();
+  if(!key.startsWith('sk-ant-')){document.getElementById('setup-err').style.display='block';return;}
+  localStorage.setItem('salus-api-key',key);
+  document.getElementById('setup-screen').style.display='none';
+  document.getElementById('main-app').style.display='flex';
+  initApp();
+}
+function updateApiKey(){
+  const key=document.getElementById('settings-api-key').value.trim();
+  if(!key.startsWith('sk-ant-')){showMsg('settings-msg','Invalid key format',true);return;}
+  localStorage.setItem('salus-api-key',key);
+  showMsg('settings-msg','API key updated!',false);
+}
+function showMsg(id,msg,err){
+  const el=document.getElementById(id);if(!el)return;
+  el.textContent=msg;el.style.display='block';el.style.color=err?'var(--red)':'var(--green)';
+  setTimeout(()=>el.style.display='none',3000);
+}
+
+function loadData(){try{const s=localStorage.getItem('salus-hq-v5');if(s)return JSON.parse(s);}catch(e){}return null;}
+function saveData(){try{localStorage.setItem('salus-hq-v5',JSON.stringify(D));}catch(e){}}
+
+let D={};
+
+function initApp(){
+  const saved=loadData();
+  if(saved){D=saved;}else{seedData();}
+  // Ensure all arrays exist
+  ['verticals','projectTypes','tasks','people','brain','meetings','decisions','competitors','projects','weeklyReviews','savedReports','raiseLog','chat'].forEach(k=>{if(!D[k])D[k]=[];});
+  if(!D.verticals.length)D.verticals=[...DEFAULT_VERTICALS];
+  if(!D.projectTypes||!D.projectTypes.length)D.projectTypes=[...DEFAULT_PROJECT_TYPES];
+  if(!D.settings)D.settings={name:'Sola Alonge',title:'General Manager',company:'Salus',tz:'Asia/Dubai',autoBrief:false,raiseTracker:true};
+  saveData();
+
+  // Update UI with settings
+  const s=D.settings;
+  document.getElementById('tb-title').textContent=`Good morning, ${s.name.split(' ')[0]}`;
+  document.getElementById('sidebar-co-name').textContent=s.company+' HQ';
+  document.getElementById('sidebar-gm-name').textContent=s.title+' · Command Centre';
+  document.getElementById('tb-date').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  populateAllSelects();
+  renderAll();
+  renderCoaching();
+  renderChat();
+  loadSettingsView();
+}
+
+function seedData(){
+  const add=n=>{const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().split('T')[0];};
+  D={
+    settings:{name:'Sola Alonge',title:'General Manager',company:'Salus',tz:'Asia/Dubai',autoBrief:false,raiseTracker:true},
+    verticals:[...DEFAULT_VERTICALS],
+    projectTypes:[...DEFAULT_PROJECT_TYPES],
+    tasks:[
+      {id:1,title:'Follow up with delivery partner on window expansion',vertical:'Delivery',priority:'High',due:add(0),status:'To Do',tags:['delivery'],output:'Action',desc:'Ghanem/Yassin promised answer by Monday. 5AM-1PM and 2PM-9PM expansion.',done:false,assignee:''},
+      {id:2,title:'Confirm Be Fit private label MOQ and flavors',vertical:'Not Guilty',priority:'High',due:add(2),status:'To Do',tags:['be-fit'],output:'Action',desc:'Start with 3 flavors. MOQ ~200-300 cartons.',done:false,assignee:''},
+      {id:3,title:'Finalise referral program — fixed 50 SAR',vertical:'Marketing',priority:'High',due:add(1),status:'In Progress',tags:['referral'],output:'Decision',desc:'Tikrar confirmation + finance approval.',done:false,assignee:'Raghad Alsharqawi'},
+      {id:4,title:'Set Sherif KPIs and follow up on salary',vertical:'People & Culture',priority:'High',due:add(5),status:'To Do',tags:['sherif'],output:'Meeting',desc:'Rami considering 8K. KPIs need co-creation. Critical retention risk.',done:false,assignee:''},
+      {id:5,title:'Confirm Faris/Masarra onboarding — May 1',vertical:'Marketing',priority:'High',due:add(3),status:'In Progress',tags:['agency'],output:'Decision',desc:'Prepare assets and access.',done:false,assignee:'Sherif Youssef'},
+      {id:6,title:'Launch snack sampling — 250 clients',vertical:'Marketing',priority:'Medium',due:add(4),status:'To Do',tags:['snacks'],output:'Action',desc:'Half-portion samples. 25-28 April.',done:false,assignee:''},
+      {id:7,title:'Q2 financial performance review',vertical:'Finance',priority:'High',due:add(6),status:'To Do',tags:['finance'],output:'Report',desc:'Prepare topline numbers for Rami. Margin analysis.',done:false,assignee:'Miryam Mulla'},
+      {id:8,title:'Evaluate Tagnet — keep or switch',vertical:'Marketing',priority:'High',due:add(7),status:'In Progress',tags:['agency'],output:'Decision',desc:'End of month deadline.',done:false,assignee:'Sherif Youssef'},
+    ],
+    people:[
+      {id:1,name:'Sherif Youssef',type:'internal',role:'Marketing Executive',team:'Marketing',reportsTo:'Sola Alonge',company:'',jd:'CRM management, influencer relationships, copywriting, campaign execution, agency management.',contract:'Full-time',startDate:'',birthday:'',notes:'5x original scope. ~7.5K SAR. HIGH RETENTION RISK. External job offers. Apr 5: asked for 8K.',morale:'neutral',encounters:[{date:'2026-04-05',note:'1-on-1 with Rami. Presented role expansion. Asked for 8K. Rami considering.'}]},
+      {id:2,name:'Afnan Muhammed',type:'internal',role:'CS Team Lead',team:'Customer Service',reportsTo:'Sola Alonge',company:'',jd:'Arabic DMs, outreach calls, social responses, customer retention.',contract:'Full-time',startDate:'',birthday:'',notes:'TikTok access approved. Reliable.',morale:'good',encounters:[]},
+      {id:3,name:'Raghad Alsharqawi',type:'internal',role:'Product & Tech',team:'BizDev',reportsTo:'Sola Alonge',company:'',jd:'Tikrar platform, B2B pipeline, referral program, WhatsApp integration.',contract:'Full-time',startDate:'',birthday:'',notes:'',morale:'good',encounters:[]},
+      {id:4,name:'Miryam Mulla',type:'internal',role:'Finance Lead',team:'Finance',reportsTo:'Sola Alonge',company:'',jd:'Revenue tracking, margin analysis, no-voucher rates, financial reporting.',contract:'Full-time',startDate:'',birthday:'',notes:'Target: 1.1-1.2M April.',morale:'good',encounters:[]},
+      {id:5,name:'Naeem Bhombal',type:'internal',role:'Videographer',team:'Marketing',reportsTo:'Sherif Youssef',company:'',jd:'Video content production, social media shoots, event coverage.',contract:'Full-time',startDate:'',birthday:'',notes:'Ball District covered.',morale:'good',encounters:[]},
+      {id:6,name:'Razan',type:'internal',role:'Graphic Designer',team:'Marketing',reportsTo:'Sherif Youssef',company:'',jd:'Brand design, social media graphics, campaign assets.',contract:'Full-time',startDate:'',birthday:'',notes:'Share Tagnet creatives as reference.',morale:'good',encounters:[]},
+      {id:7,name:'Ghanem Alsadeq',type:'external',role:'Delivery Partner',team:'Delivery',reportsTo:'',company:'Delivery Co.',jd:'Last-mile delivery across Saudi cities.',contract:'Partner',startDate:'',birthday:'',notes:'Window expansion answer pending. 389 Riyadh, 37 Dammam customers.',morale:'neutral',encounters:[{date:'2026-04-08',note:'Delivery meeting. Window expansion discussed. Answer promised by Monday.'}]},
+      {id:8,name:'Faris Alsherif',type:'external',role:'Performance Marketing',team:'Marketing',reportsTo:'',company:'Masarra',jd:'Performance marketing agency. Saudi-based. 8 years e-commerce. 140+ brand partners.',contract:'Agency',startDate:'2026-05-01',birthday:'',notes:'Onboarding May 1.',morale:'good',encounters:[]},
+    ],
+    brain:[
+      {id:1,type:'Meeting notes',vertical:'Delivery',title:'Delivery meeting — 8 Apr 2026',date:'2026-04-08',content:'Window expansion proposed. Answer promised Monday. Riyadh traffic 1-6PM.',tasks_extracted:3,section:'meeting'},
+      {id:2,type:'Meeting notes',vertical:'Marketing',title:'Weekly marketing — 15 Apr 2026',date:'2026-04-15',content:'Referral to 50 SAR. Subscription 60-day cap. Turki giveaway 300K views.',tasks_extracted:5,section:'meeting'},
+      {id:3,type:'Financial data',vertical:'Finance',title:'April sales — Week 3',date:'2026-04-19',content:'25% no-voucher rate. Taif 3 customers. Revenue on track 1.1-1.2M.',tasks_extracted:0,section:'financial'},
+      {id:4,type:'Meeting notes',vertical:'Not Guilty',title:'Be Fit partnership — 16 Apr 2026',date:'2026-04-16',content:'Private label protein bars. MOQ 200-300 cartons. Reciprocal deal.',tasks_extracted:3,section:'meeting'},
+    ],
+    meetings:[
+      {id:1,name:'All-hands team meeting',vertical:'General Management',type:'recurring',day:'Sunday',time:'10:00 AM',tz:'Asia/Riyadh',date:'',participants:'All teams',notes:'Weekly full team sync.',notesHistory:[]},
+      {id:2,name:'Marketing weekly sync',vertical:'Marketing',type:'recurring',day:'Sunday',time:'2:00 PM',tz:'Asia/Riyadh',date:'',participants:'Sherif, Razan, Naeem, Raghad',notes:'Campaign performance, content calendar.',notesHistory:[]},
+      {id:3,name:'Kitchen ops check-in',vertical:'Kitchen',type:'recurring',day:'Tuesday',time:'11:00 AM',tz:'Asia/Riyadh',date:'',participants:'Kitchen team',notes:'Menu, quality, production.',notesHistory:[]},
+      {id:4,name:'Delivery logistics',vertical:'Delivery',type:'recurring',day:'Wednesday',time:'9:00 AM',tz:'Asia/Riyadh',date:'',participants:'Ghanem, Yassin',notes:'Route issues, complaints, capacity.',notesHistory:[]},
+    ],
+    decisions:[
+      {id:1,title:'Move to variable logistics model',category:'Operational',vertical:'Delivery',rationale:'Single partner creates brand risk. Variable model allows surge flexibility.',outcome:'Reduced complaints, better capacity.',date:'2026-04-12'},
+      {id:2,title:'Cap subscription pause at 60 days',category:'Financial',vertical:'Finance',rationale:'Price volatility makes long delays a margin risk.',outcome:'Protected margin on forward-sold subscriptions.',date:'2026-04-15'},
+    ],
+    competitors:[
+      {id:1,name:'Kalo',market:'Saudi Arabia',maxDiscount:30,revenue:'~6M SAR/month',priceVsUs:'Similar',notes:'Dropping max discounts. Gym subscription only. No discounts, informative content. Kids lunchbox 345 SAR.',lastUpdated:'2026-04-19'},
+      {id:2,name:'Gymfood',market:'Saudi Arabia',maxDiscount:25,revenue:'~3M SAR/month',priceVsUs:'Similar',notes:'3 months for price of 2. 25% with cashback. Dropping from previous 50% max.',lastUpdated:'2026-04-19'},
+    ],
+    projects:[
+      {id:1,name:'Not Guilty brand launch',type:'Launch',vertical:'Not Guilty',status:'Active',priority:'High',startDate:'2026-04-01',deadline:'2026-07-01',budget:150000,lead:'',desc:'Launch Not Guilty protein snack brand. Be Fit private label partnership, sampling, distribution.',tasks:[],notes:''},
+      {id:2,name:'Ramadan 2027 campaign planning',type:'Campaign',vertical:'Marketing',status:'Planning',priority:'Medium',startDate:'2026-05-01',deadline:'2026-12-01',budget:80000,lead:'Sherif Youssef',desc:'Early planning for Ramadan 2027 campaign. Build on 2026 learnings.',tasks:[],notes:''},
+    ],
+    weeklyReviews:[],
+    savedReports:[],
+    raiseLog:[],
+    chat:[],
+    taskFilter:'All',
+    brainSection:'all',
+    decisionFilter:'',
+    projectTypeFilter:'',
+  };
+  saveData();
+}
+
+function saveIdentitySettings(){
+  D.settings.name=document.getElementById('set-name').value||D.settings.name;
+  D.settings.title=document.getElementById('set-title').value||D.settings.title;
+  D.settings.company=document.getElementById('set-company').value||D.settings.company;
+  D.settings.tz=document.getElementById('set-tz').value;
+  saveData();
+  document.getElementById('tb-title').textContent=`Good morning, ${D.settings.name.split(' ')[0]}`;
+  document.getElementById('sidebar-co-name').textContent=D.settings.company+' HQ';
+  document.getElementById('sidebar-gm-name').textContent=D.settings.title+' · Command Centre';
+  showMsg('settings-msg','Settings saved!',false);
+}
+
+function togglePref(key,el){
+  D.settings[key]=!D.settings[key];
+  el.classList.toggle('on',D.settings[key]);
+  saveData();
+}
+
+function populateAllSelects(){
+  const vSelects=['nt-v','nb-v','nm-vertical','nd-vertical','np-team','nproj-vertical'];
+  vSelects.forEach(id=>{const el=document.getElementById(id);if(!el)return;const cur=el.value;el.innerHTML=D.verticals.map(v=>`<option value="${v}">${v}</option>`).join('');if(cur)el.value=cur;});
+  const ptSelect=document.getElementById('nproj-type');
+  if(ptSelect){ptSelect.innerHTML=D.projectTypes.map(t=>`<option value="${t}">${t}</option>`).join('');}
+  const aSelect=document.getElementById('nt-assign');
+  if(aSelect){aSelect.innerHTML=`<option value="">Me (${D.settings.name.split(' ')[0]})</option>`+D.people.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');}
+  const lSelect=document.getElementById('nproj-lead');
+  if(lSelect){lSelect.innerHTML=`<option value="">Me</option>`+D.people.filter(p=>p.type==='internal').map(p=>`<option value="${p.name}">${p.name}</option>`).join('');}
+}
+
+function addVertical(){
+  const name=document.getElementById('new-vertical-input').value.trim();
+  if(!name||D.verticals.includes(name))return;
+  D.verticals.push(name);saveData();populateAllSelects();loadSettingsView();
+  document.getElementById('new-vertical-input').value='';
+}
+function addVerticalQuick(){
+  const name=document.getElementById('qv-name').value.trim();
+  if(!name)return;
+  if(!D.verticals.includes(name)){D.verticals.push(name);saveData();populateAllSelects();}
+  document.getElementById('nt-v').value=name;
+  closeM('add-vertical-quick');document.getElementById('qv-name').value='';
+}
+function removeVertical(v){
+  if(!confirm(`Delete vertical "${v}"? Tasks using it will keep their current value.`))return;
+  D.verticals=D.verticals.filter(x=>x!==v);saveData();populateAllSelects();loadSettingsView();
+}
+function addProjectType(){
+  const name=document.getElementById('new-project-type-input').value.trim();
+  if(!name||D.projectTypes.includes(name))return;
+  D.projectTypes.push(name);saveData();populateAllSelects();loadSettingsView();
+  document.getElementById('new-project-type-input').value='';
+}
+function addProjectTypeQuick(){
+  const name=document.getElementById('qpt-name').value.trim();
+  if(!name)return;
+  if(!D.projectTypes.includes(name)){D.projectTypes.push(name);saveData();populateAllSelects();}
+  document.getElementById('nproj-type').value=name;
+  closeM('add-projtype-quick');document.getElementById('qpt-name').value='';
+}
+function removeProjectType(t){
+  if(!confirm(`Delete project type "${t}"?`))return;
+  D.projectTypes=D.projectTypes.filter(x=>x!==t);saveData();populateAllSelects();loadSettingsView();
+}
+
+function loadSettingsView(){
+  const el=document.getElementById('verticals-list');
+  if(el)el.innerHTML=D.verticals.map(v=>`<span class="vertical-tag" onclick="removeVertical('${v.replace(/'/g,"\\'")}')">  ${v} ×</span>`).join('');
+  const ptEl=document.getElementById('project-types-list');
+  if(ptEl)ptEl.innerHTML=D.projectTypes.map(t=>`<span class="vertical-tag" onclick="removeProjectType('${t.replace(/'/g,"\\'")}')">  ${t} ×</span>`).join('');
+  const s=D.settings;
+  ['set-name','set-title','set-company'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=s[id.replace('set-','')]||'';});
+  const tzEl=document.getElementById('set-tz');if(tzEl)tzEl.value=s.tz||'Asia/Dubai';
+  const keyEl=document.getElementById('settings-api-key');if(keyEl)keyEl.value=getKey();
+  const tb=document.getElementById('toggle-brief');if(tb)tb.classList.toggle('on',s.autoBrief);
+  const tr=document.getElementById('toggle-raise');if(tr)tr.classList.toggle('on',s.raiseTracker);
+}
+
+function calcS(){
+  const t=D.tasks.length||1,done=D.tasks.filter(x=>x.done).length;
+  const today=new Date().toISOString().split('T')[0];
+  const od=D.tasks.filter(x=>!x.done&&x.due&&x.due<today).length;
+  const hd=D.tasks.filter(x=>x.done&&x.priority==='High').length,ht=D.tasks.filter(x=>x.priority==='High').length||1;
+  const gm=D.people.filter(p=>p.morale==='great'||p.morale==='good').length;
+  const c=Math.round((done/t)*100),p=Math.round((gm/Math.max(D.people.length,1))*100);
+  const pr=Math.round((hd/ht)*100),os=Math.max(0,100-od*15);
+  return{overall:Math.round(c*.3+p*.2+pr*.25+os*.25),c,p,pr,os};
+}
+
+function renderCoaching(){
+  const s=calcS();
+  document.getElementById('s-gm').textContent=s.overall;
+  const pills=[{l:'Completion',v:s.c,col:'#185FA5'},{l:'Priorities',v:s.pr,col:'#534AB7'},{l:'People',v:s.p,col:'#1D9E75'},{l:'On time',v:s.os,col:s.os>=80?'#1D9E75':'#E24B4A'}];
+  document.getElementById('score-pills').innerHTML=pills.map(p=>`<span class="score-pill" style="background:${p.col}18;color:${p.col}">${p.l}: ${p.v}%</span>`).join('');
+  document.getElementById('perf-grid').innerHTML=pills.map(p=>`<div class="perf-cell"><div class="perf-val" style="color:${p.col}">${p.v}%</div><div class="perf-label">${p.l}</div></div>`).join('');
+  document.getElementById('score-desc').textContent=s.overall>=80?"Strong week — you're running things well.":s.overall>=60?"Solid progress, a few areas need attention.":"Some key areas need focus.";
+  drawRing(s.overall);drawCompletion();drawVertical();renderBottlenecks();renderInsights(s);renderRaiseLog();
+}
+
+function drawRing(sc){
+  const cv=document.getElementById('score-ring');if(!cv)return;
+  const ctx=cv.getContext('2d'),cx=50,cy=50,r=38,lw=9;
+  ctx.clearRect(0,0,100,100);
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle='#EEEDFE';ctx.lineWidth=lw;ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,r,-Math.PI/2,(sc/100)*Math.PI*2-Math.PI/2);
+  ctx.strokeStyle=sc>=80?'#534AB7':sc>=60?'#EF9F27':'#E24B4A';ctx.lineWidth=lw;ctx.lineCap='round';ctx.stroke();
+  ctx.fillStyle='#534AB7';ctx.font='bold 17px -apple-system,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(sc,cx,cy-4);
+  ctx.fillStyle='#888';ctx.font='9px sans-serif';ctx.fillText('/100',cx,cy+9);
+}
+function drawCompletion(){
+  if(charts.c)charts.c.destroy();
+  const done=D.tasks.filter(t=>t.done).length;
+  const data=[Math.max(0,done-8),Math.max(0,done-5),Math.max(0,done-2),Math.max(0,done-1),done];
+  const el=document.getElementById('c-chart');if(!el)return;
+  charts.c=new Chart(el,{type:'line',data:{labels:['Wk 1','Wk 2','Wk 3','Wk 4','Now'],datasets:[{data,borderColor:'#185FA5',backgroundColor:'rgba(24,95,165,0.07)',borderWidth:2,tension:.4,fill:true,pointBackgroundColor:'#185FA5',pointRadius:4,pointBorderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:11},stepSize:1}},x:{grid:{display:false},ticks:{font:{size:11}}}}}});
+}
+function drawVertical(){
+  if(charts.v)charts.v.destroy();
+  const vk=D.verticals.slice(0,8);
+  const colors=['#534AB7','#1D9E75','#993C1D','#854F0B','#993556','#3B6D11','#185FA5','#EF9F27'];
+  const el=document.getElementById('v-chart');if(!el)return;
+  charts.v=new Chart(el,{type:'doughnut',data:{labels:vk,datasets:[{data:vk.map(v=>D.tasks.filter(t=>!t.done&&t.vertical===v).length),backgroundColor:colors.map(c=>c+'BB'),borderColor:colors,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'68%'}});
+}
+function renderBottlenecks(){
+  const ip=D.tasks.filter(t=>!t.done&&t.status==='In Progress');
+  const el=document.getElementById('bottlenecks');if(!el)return;
+  if(!ip.length){el.innerHTML='<div style="font-size:13px;color:var(--text2);padding:8px 0">No stuck tasks — great flow.</div>';return;}
+  el.innerHTML=ip.slice(0,5).map(t=>{
+    const d=t.due?Math.max(0,Math.round((new Date()-new Date(t.due))/86400000)):2;
+    const pct=Math.min(100,Math.round((d/7)*100)),col=pct>70?'#E24B4A':pct>40?'#EF9F27':'#1D9E75';
+    return`<div class="bn-row"><span style="font-size:12.5px;font-weight:500;min-width:130px;flex-shrink:0">${t.title.length>34?t.title.slice(0,32)+'…':t.title}</span><span class="chip" style="background:#E6F1FB;color:#0C447C">${t.vertical.length>8?t.vertical.slice(0,7)+'…':t.vertical}</span><div class="bn-track"><div class="bn-fill" style="width:${pct}%;background:${col}"></div></div><span style="font-size:11px;color:var(--text2)">${d}d</span></div>`;
+  }).join('');
+}
+function renderInsights(s){
+  const today=new Date().toISOString().split('T')[0],od=D.tasks.filter(t=>!t.done&&t.due&&t.due<today);
+  const ins=[];
+  if(od.length)ins.push({ic:'#E24B4A',bg:'#FFF0F0',icon:'!',title:`${od.length} overdue — act today`,text:`"${od[0].title}" is past due.`});
+  const sherif=D.people.find(p=>p.name.includes('Sherif'));
+  if(sherif&&sherif.morale==='neutral')ins.push({ic:'#EF9F27',bg:'#FFFBF0',icon:'◉',title:'Sherif — retention risk',text:'Apr 5 left things open. Close the loop on KPIs before he disengages.'});
+  ins.push({ic:'#185FA5',bg:'#F0F6FF',icon:'↑',title:'Delivery window answer due',text:'Ghanem/Yassin promised Monday. Chase if no reply.'});
+  if(s.overall>=75)ins.push({ic:'#1D9E75',bg:'#F0FFF8',icon:'✓',title:'Document wins — raise conversation coming',text:'Strong week. Log 3 outcomes in the raise tracker before Thursday.'});
+  ins.push({ic:'#854F0B',bg:'#FFFBF0',icon:'↗',title:'Taif — only 3 customers since launch',text:'Add Taif media allocation to next marketing meeting agenda.'});
+  document.getElementById('insights').innerHTML=ins.map(i=>`<div class="insight-card"><div class="insight-icon" style="background:${i.bg};color:${i.ic}">${i.icon}</div><div><div class="insight-title">${i.title}</div><div class="insight-text">${i.text}</div></div></div>`).join('');
+}
+function renderRaiseLog(){
+  const el=document.getElementById('raise-list');if(!el)return;
+  if(!D.raiseLog.length){el.innerHTML='<div style="font-size:12px;color:var(--purple-dark);opacity:.7">No entries yet. Click "Update this week\'s entry" to start building your case.</div>';return;}
+  el.innerHTML=D.raiseLog.slice(-4).reverse().map(r=>`<div class="raise-week"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:4px">${r.week}</div><div style="font-size:12.5px">${r.summary}</div></div>`).join('');
+}
+
+function renderAll(){
+  renderStats();renderPList();renderAlerts();renderVBars();renderTaskTable();renderKanban();renderBrain();renderPeople();renderMeetings();renderReport();renderFilterRow();renderDecisions();renderCompetitors();renderWeeklyReviews();renderSavedReports();renderProjects();
+}
+
+function renderStats(){
+  const today=new Date().toISOString().split('T')[0],we=new Date();we.setDate(we.getDate()+5);
+  const open=D.tasks.filter(t=>!t.done).length,due=D.tasks.filter(t=>!t.done&&t.due&&t.due<=we.toISOString().split('T')[0]).length;
+  const od=D.tasks.filter(t=>!t.done&&t.due&&t.due<today).length,done=D.tasks.filter(t=>t.done).length;
+  document.getElementById('s-open').textContent=open;
+  document.getElementById('s-due').textContent=due;
+  document.getElementById('s-od-sub').innerHTML=od>0?`<span style="color:var(--red);font-weight:600">${od} overdue</span>`:'All on track';
+  document.getElementById('s-done').textContent=done;
+  document.getElementById('s-rate').textContent=D.tasks.length?Math.round((done/D.tasks.length)*100)+'% completion':'';
+  const b=document.getElementById('od-badge');b.textContent=od;b.style.display=od>0?'':'none';
+}
+function renderPList(){
+  const today=new Date().toISOString().split('T')[0],tasks=D.tasks.filter(t=>!t.done&&t.priority==='High').slice(0,6);
+  document.getElementById('pri-count').textContent=tasks.length+' high';
+  document.getElementById('priority-list').innerHTML=tasks.map(t=>`<div class="task-row" onclick="openTask(${t.id})"><div class="tcircle"></div><div class="tbody"><div class="ttitle">${t.title}</div><div class="tmeta">${t.vertical}${t.assignee?' · →'+t.assignee:''}</div></div><span class="chip" style="background:#E6F1FB;color:#0C447C">${t.vertical.length>8?t.vertical.slice(0,7)+'…':t.vertical}</span><span class="tdue${t.due&&t.due<today?' late':''}">${fd(t.due)}</span></div>`).join('');
+}
+function renderAlerts(){
+  const today=new Date().toISOString().split('T')[0],od=D.tasks.filter(t=>!t.done&&t.due&&t.due<today);
+  const al=od.map(t=>({c:'#E24B4A',text:`"${t.title.slice(0,40)}" overdue`,sub:`${t.vertical} · ${fd(t.due)}`}));
+  D.people.filter(p=>p.morale==='low').forEach(p=>al.push({c:'#EF9F27',text:`${p.name} morale is low`,sub:'Schedule a check-in'}));
+  if(!al.length)al.push({c:'#1D9E75',text:'No urgent alerts',sub:'All on track'});
+  document.getElementById('alerts-list').innerHTML=al.slice(0,5).map(a=>`<div class="alert-row"><div class="apip" style="background:${a.c}"></div><div><div style="font-size:12px;font-weight:600">${a.text}</div><div style="font-size:11px;color:var(--text2);margin-top:2px">${a.sub}</div></div></div>`).join('');
+}
+function renderVBars(){
+  const vs=D.verticals.slice(0,8);
+  const colors=['#534AB7','#1D9E75','#993C1D','#854F0B','#993556','#3B6D11','#185FA5','#EF9F27'];
+  const counts={};vs.forEach(v=>counts[v]=D.tasks.filter(t=>!t.done&&t.vertical===v).length);
+  const max=Math.max(...Object.values(counts),1);
+  document.getElementById('vbars').innerHTML=vs.map((v,i)=>`<div class="vbar-row"><div class="vbar-label">${v.length>9?v.slice(0,8)+'…':v}</div><div class="vbar-track"><div class="vbar-fill" style="width:${Math.round((counts[v]/max)*100)}%;background:${colors[i%colors.length]}"></div></div><div class="vbar-n">${counts[v]}</div></div>`).join('');
+}
+function renderTaskTable(){
+  const today=new Date().toISOString().split('T')[0];
+  const filtered=(!D.taskFilter||D.taskFilter==='All')?D.tasks:D.tasks.filter(t=>t.vertical===D.taskFilter);
+  document.getElementById('tbl-body').innerHTML=filtered.map(t=>`<tr onclick="openTask(${t.id})" style="cursor:pointer"><td><div class="tcircle${t.done?' done':''}" onclick="event.stopPropagation();toggleDone(${t.id})"></div></td><td><div style="font-weight:500;${t.done?'text-decoration:line-through;color:var(--text2)':''}">${t.title}</div><div style="font-size:11px;color:var(--text2)">${t.output}${t.tags.length?' · '+t.tags.join(', '):''}</div></td><td><span class="chip" style="background:#E6F1FB;color:#0C447C">${t.vertical.length>10?t.vertical.slice(0,9)+'…':t.vertical}</span></td><td style="font-size:12px;color:var(--text2)">${t.assignee||'Me'}</td><td><div style="display:flex;align-items:center;gap:5px"><div class="pdot ${t.priority==='High'?'ph':t.priority==='Medium'?'pm':'pl'}"></div>${t.priority}</div></td><td><span style="${!t.done&&t.due&&t.due<today?'color:var(--red);font-weight:600':'color:var(--text2)'}">${fd(t.due)}</span></td><td><span class="status-pill">${t.status}</span></td></tr>`).join('');
+}
+function renderKanban(){
+  document.getElementById('kanban').innerHTML=['To Do','In Progress','Done'].map(col=>{
+    const tasks=D.tasks.filter(t=>col==='Done'?t.done:t.status===col&&!t.done);
+    return`<div class="kcol"><div class="kcol-head"><span class="kcol-label">${col}</span><span class="kcol-n">${tasks.length}</span></div>${tasks.map(t=>`<div class="kcard" onclick="openTask(${t.id})"><div class="kcard-title">${t.title}</div><div class="kcard-meta"><span class="chip" style="background:#E6F1FB;color:#0C447C">${t.vertical.length>8?t.vertical.slice(0,7)+'…':t.vertical}</span><div class="pdot ${t.priority==='High'?'ph':t.priority==='Medium'?'pm':'pl'}"></div><span style="font-size:11px;color:var(--text2)">${fd(t.due)}</span></div></div>`).join('')}</div>`;
+  }).join('');
+}
+function renderBrain(){
+  const sec=D.brainSection||'all';
+  const filtered=sec==='all'?D.brain:D.brain.filter(b=>b.section===sec);
+  const ic={'Meeting notes':'◷','Email':'✉','WhatsApp':'◈','Financial data':'$','Sales figures':'📊','Competitive intel':'⚡','PDF / Doc':'◫','1-on-1':'◉','Other':'◎'};
+  const bg={'Marketing':'#EEEDFE','Finance':'#FAEEDA','Not Guilty':'#EAF3DE','General Management':'#E6F1FB','default':'#F1EFE8'};
+  document.getElementById('brain-list').innerHTML=filtered.map(b=>`<div class="brain-entry"><div class="brain-icon" style="background:${bg[b.vertical]||bg.default}">${ic[b.type]||'◎'}</div><div style="flex:1"><div style="font-size:13px;font-weight:600">${b.title}</div><div style="font-size:11px;color:var(--text2);margin-top:2px">${b.type} · ${b.vertical} · ${fd(b.date)}${b.tasks_extracted?' · '+b.tasks_extracted+' tasks':''}</div></div></div>`).join('')||'<div style="font-size:13px;color:var(--text2);padding:12px 0">No entries in this category yet.</div>';
+}
+function showBrainSection(sec){
+  D.brainSection=sec;
+  ['all','meeting','financial','competitive','other'].forEach(s=>{
+    const el=document.getElementById('bsec-'+s);
+    if(!el)return;
+    el.style.background=s===sec?'var(--navy-dark)':'';
+    el.style.color=s===sec?'white':'';
+    el.style.borderColor=s===sec?'var(--navy-dark)':'';
+  });
+  renderBrain();
+}
+
+function renderProjects(){
+  const el=document.getElementById('project-grid');if(!el)return;
+  const colors={'Campaign':'#534AB7','Event':'#1D9E75','Shoot':'#993C1D','Giveaway':'#854F0B','Gift':'#993556','Launch':'#3B6D11','Partnership':'#185FA5','Other':'#888'};
+  const statColors={'Planning':'#E6F1FB','Active':'#EAF3DE','On hold':'#FAEEDA','Completed':'#E1F5EE','Cancelled':'#FFF0F0'};
+  const statText={'Planning':'#0C447C','Active':'#27500A','On hold':'#633806','Completed':'#085041','Cancelled':'#E24B4A'};
+  const filtered=D.projectTypeFilter?D.projects.filter(p=>p.type===D.projectTypeFilter):D.projects;
+  el.innerHTML=filtered.map(p=>{
+    const col=colors[p.type]||'#888';
+    const tasks=D.tasks.filter(t=>t.vertical===p.vertical&&!t.done).length;
+    return`<div class="project-card" onclick="openProject(${p.id})">
+      <div class="project-hero" style="background:${col}22;border-left:4px solid ${col}"></div>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px">
+        <div>
+          <div class="project-title">${p.name}</div>
+          <div class="project-meta">${p.type} · ${p.vertical}${p.lead?' · '+p.lead:''}</div>
+        </div>
+        <span style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:600;background:${statColors[p.status]||'#F1EFE8'};color:${statText[p.status]||'#444'};white-space:nowrap">${p.status}</span>
+      </div>
+      ${p.desc?`<div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.5">${p.desc.slice(0,80)}${p.desc.length>80?'…':''}</div>`:''}
+      <div class="project-stats">
+        <div class="project-stat"><div class="project-stat-val">${tasks}</div><div class="project-stat-label">Open tasks</div></div>
+        <div class="project-stat"><div class="project-stat-val" style="font-size:12px">${p.budget?'SAR '+Number(p.budget).toLocaleString():'—'}</div><div class="project-stat-label">Budget</div></div>
+        <div class="project-stat"><div class="project-stat-val" style="font-size:12px">${p.deadline?fd(p.deadline):'—'}</div><div class="project-stat-label">Deadline</div></div>
+      </div>
+    </div>`;
+  }).join('')||'<div style="font-size:13px;color:var(--text2);grid-column:1/-1;padding:20px 0">No projects yet. Create your first project — campaigns, events, shoots, giveaways.</div>';
+  // Render filter row
+  const fr=document.getElementById('project-filter-row');if(!fr)return;
+  const types=['All',...D.projectTypes];
+  fr.innerHTML='<span style="font-size:11px;color:var(--text2);font-weight:500">Filter:</span>'+types.map(t=>`<div class="fchip${(!D.projectTypeFilter&&t==='All')||D.projectTypeFilter===t?' active':''}" onclick="setProjectFilter('${t==='All'?'':t}')">${t}</div>`).join('');
+}
+function setProjectFilter(t){D.projectTypeFilter=t;renderProjects();}
+
+function renderPeople(){
+  const ac=['#EEEDFE','#E1F5EE','#FAECE7','#FAEEDA','#FBEAF0','#EAF3DE','#E6F1FB','#F1EFE8'];
+  const at=['#534AB7','#0F6E56','#993C1D','#854F0B','#993556','#3B6D11','#0C447C','#444'];
+  const mc={great:'#1D9E75',good:'#639922',neutral:'#EF9F27',low:'#E24B4A'};
+  const pg=document.getElementById('people-grid');if(!pg)return;
+  pg.innerHTML=D.people.map((p,i)=>`<div class="pcard" onclick="openPerson(${p.id})">
+    <div class="pcard-top">
+      <div class="avatar" style="width:40px;height:40px;background:${ac[i%8]};color:${at[i%8]}">${p.name.split(' ').map(n=>n[0]).join('')}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">${p.name}</div><div style="font-size:11px;color:var(--text2)">${p.role}</div>${p.type==='external'?`<span style="font-size:9px;background:var(--amber);color:white;padding:1px 6px;border-radius:4px;font-weight:600">${p.company||'External'}</span>`:''}</div>
+      <div class="mdot" style="background:${mc[p.morale]}"></div>
+    </div>
+    <div class="pcard-details">
+      ${p.team?`<div class="pcard-detail-row"><span class="pcard-detail-label">Team:</span>${p.team}</div>`:''}
+      ${p.reportsTo?`<div class="pcard-detail-row"><span class="pcard-detail-label">Reports to:</span>${p.reportsTo}</div>`:''}
+      ${p.contract?`<div class="pcard-detail-row"><span class="pcard-detail-label">Contract:</span>${p.contract}</div>`:''}
+    </div>
+  </div>`).join('');
+  renderOrgChart();
+}
+
+function renderOrgChart(){
+  const el=document.getElementById('org-chart');if(!el)return;
+  const topLevel=D.people.filter(p=>!p.reportsTo||p.reportsTo==='');
+  const getReports=name=>D.people.filter(p=>p.reportsTo===name);
+  const mc={great:'#1D9E75',good:'#639922',neutral:'#EF9F27',low:'#E24B4A'};
+  function renderNode(p){
+    const reports=getReports(p.name);
+    return`<div style="display:flex;flex-direction:column;align-items:center">
+      <div class="org-node" onclick="openPerson(${p.id})" style="border-top:3px solid ${mc[p.morale]}">
+        <div class="org-node-name">${p.name.split(' ')[0]}</div>
+        <div class="org-node-role">${p.role.length>18?p.role.slice(0,16)+'…':p.role}</div>
+      </div>
+      ${reports.length?`<div class="org-connector"><div class="org-connector-line"></div></div><div class="org-children">${reports.map(r=>renderNode(r)).join('')}</div>`:''}
+    </div>`;
+  }
+  el.innerHTML=`<div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap">${topLevel.map(p=>renderNode(p)).join('')}</div>`;
+}
+
+function renderMeetings(){
+  const recurring=D.meetings.filter(m=>m.type==='recurring');
+  const impromptu=D.meetings.filter(m=>m.type==='impromptu');
+  const tzLabel={'Asia/Dubai':'Dubai','Asia/Riyadh':'Riyadh','Europe/London':'London','America/New_York':'New York'};
+  const rl=document.getElementById('recurring-list');if(!rl)return;
+  rl.innerHTML=recurring.map(m=>`<div class="mcard">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div>
+        <div class="mcard-title">${m.name}<span class="recurring-badge">Every ${m.day}</span><span class="tz-badge">${tzLabel[m.tz]||m.tz}</span></div>
+        <div class="mcard-meta">${m.day} ${m.time} · ${m.vertical} · ${m.participants||''}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-sm" onclick="openMeetingNotes(${m.id})">+ Notes</button>
+        <button class="btn btn-sm btn-navy" onclick="runAI('meeting-brief','${m.name}','${m.vertical}',${m.id})">Prep ↗</button>
+        <button class="btn btn-sm btn-red" onclick="deleteMeeting(${m.id})">Delete</button>
+      </div>
+    </div>
+    <div id="mbrief-${m.id}" class="ai-out" style="margin-top:10px"></div>
+    <div id="mloading-${m.id}" class="loading"></div>
+    ${m.notesHistory&&m.notesHistory.length?`<div class="meeting-notes-area" style="margin-top:10px;color:var(--text)"><strong style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text2)">Last notes (${fd(m.notesHistory[m.notesHistory.length-1].date)}):</strong><div style="margin-top:4px">${m.notesHistory[m.notesHistory.length-1].notes.slice(0,150)}${m.notesHistory[m.notesHistory.length-1].notes.length>150?'…':''}</div></div>`:''}
+  </div>`).join('');
+  const il=document.getElementById('impromptu-list');if(!il)return;
+  il.innerHTML=impromptu.length?impromptu.map(m=>`<div class="mcard">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between">
+      <div>
+        <div class="mcard-title">${m.name}<span class="impromptu-badge">One-off</span><span class="tz-badge">${tzLabel[m.tz]||m.tz}</span></div>
+        <div class="mcard-meta">${m.date?fd(m.date):''} ${m.time||''} · ${m.vertical}</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-sm" onclick="openMeetingNotes(${m.id})">+ Notes</button>
+        <button class="btn btn-sm btn-red" onclick="deleteMeeting(${m.id})">Delete</button>
+      </div>
+    </div>
+    ${m.notesHistory&&m.notesHistory.length?`<div class="meeting-notes-area" style="margin-top:10px;color:var(--text)">${m.notesHistory[m.notesHistory.length-1].notes.slice(0,150)}</div>`:'<div class="meeting-notes-area" style="margin-top:10px">No notes yet</div>'}
+  </div>`).join(''):'<div style="font-size:13px;color:var(--text2);padding:12px 0">No one-off meetings logged yet</div>';
+}
+
+function deleteMeeting(id){
+  if(!confirm('Delete this meeting?'))return;
+  D.meetings=D.meetings.filter(m=>m.id!==id);
+  saveData();renderMeetings();
+}
+
+function renderReport(){
+  const today=new Date().toISOString().split('T')[0];
+  const tot=D.tasks.length,done=D.tasks.filter(t=>t.done).length,od=D.tasks.filter(t=>!t.done&&t.due&&t.due<today).length,ip=D.tasks.filter(t=>!t.done&&t.status==='In Progress').length;
+  const el=document.getElementById('report-body');if(!el)return;
+  el.innerHTML=`<div style="margin-bottom:16px"><div class="sec-title">Task summary</div>${[['Total',tot,''],['Completed',done,'var(--green)'],['In progress',ip,'var(--amber)'],['Overdue',od,'var(--red)']].map(([l,v,c])=>`<div class="report-row"><span>${l}</span><span style="font-weight:600;${c?'color:'+c:''}">${v}</span></div>`).join('')}</div><div><div class="sec-title">By vertical</div>${D.verticals.map(v=>{const vt=D.tasks.filter(t=>t.vertical===v),vd=vt.filter(t=>t.done).length;return vt.length?`<div class="report-row"><span>${v}</span><span style="font-size:12px;color:var(--text2)">${vd}/${vt.length} done</span></div>`:''}).join('')}</div>`;
+}
+function renderSavedReports(){
+  const el=document.getElementById('saved-reports');if(!el)return;
+  if(!D.savedReports||!D.savedReports.length){el.innerHTML='<div style="font-size:13px;color:var(--text2)">No saved reports yet.</div>';return;}
+  el.innerHTML=D.savedReports.slice(-5).reverse().map(r=>`<div class="saved-report"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:4px">${r.date} · ${r.type}</div><div style="font-size:12.5px;color:var(--text2);line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${r.content}</div></div>`).join('');
+}
+function renderFilterRow(){
+  const vs=['All',...D.verticals];
+  const el=document.getElementById('filter-row');if(!el)return;
+  el.innerHTML='<span style="font-size:11px;color:var(--text2);font-weight:500">Filter:</span>'+vs.map(v=>`<div class="fchip${(!D.taskFilter||D.taskFilter===v)?D.taskFilter===v?' active':v==='All'?' active':'':(D.taskFilter===v?' active':'')}" onclick="setFilter('${v}')">${v}</div>`).join('');
+  document.querySelectorAll('#filter-row .fchip').forEach(el=>{el.classList.remove('active');if(el.textContent===(D.taskFilter||'All'))el.classList.add('active');});
+}
+function renderDecisions(){
+  const el=document.getElementById('decision-list');if(!el)return;
+  const catColors={'Strategic':'#EEEDFE','Operational':'#E6F1FB','People':'#FBEAF0','Financial':'#FAEEDA','Product':'#E1F5EE','Partnership':'#EAF3DE'};
+  const catText={'Strategic':'#3C3489','Operational':'#0C447C','People':'#72243E','Financial':'#633806','Product':'#085041','Partnership':'#27500A'};
+  const filtered=D.decisionFilter?D.decisions.filter(d=>d.category===D.decisionFilter):D.decisions;
+  el.innerHTML=filtered.slice().reverse().map(d=>`<div class="decision-card"><div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px"><div style="flex:1"><div style="font-size:13px;font-weight:600">${d.title}</div><div style="font-size:11px;color:var(--text2)">${fd(d.date)} · ${d.vertical}</div></div><span class="decision-cat" style="background:${catColors[d.category]||'#F1EFE8'};color:${catText[d.category]||'#444'}">${d.category}</span></div><div style="font-size:12.5px;color:var(--text2);line-height:1.6">${d.rationale}</div>${d.outcome?`<div style="font-size:12px;margin-top:8px;color:var(--green);font-weight:500">Expected: ${d.outcome}</div>`:''}</div>`).join('')||'<div style="font-size:13px;color:var(--text2);padding:12px">No decisions logged yet.</div>';
+  const dfr=document.getElementById('decision-filter-row');if(!dfr)return;
+  const cats=['All','Strategic','Operational','People','Financial','Product','Partnership'];
+  dfr.innerHTML='<span style="font-size:11px;color:var(--text2);font-weight:500">Filter:</span>'+cats.map(c=>`<div class="fchip${(!D.decisionFilter&&c==='All')||D.decisionFilter===c?' active':''}" onclick="setDecisionFilter('${c==='All'?'':c}')">${c}</div>`).join('');
+}
+function renderCompetitors(){
+  const el=document.getElementById('comp-list');if(!el)return;
+  el.innerHTML=(D.competitors||[]).map(c=>`<div class="comp-card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><div style="font-size:14px;font-weight:700">${c.name}</div><button class="btn btn-sm" onclick="runAI('comp-analysis','${c.name}')">AI analysis ↗</button></div><div style="font-size:12px;color:var(--text2);margin-bottom:12px">${c.market} · Updated ${fd(c.lastUpdated)}</div><div class="comp-grid"><div class="comp-stat"><div style="font-size:16px;font-weight:700">${c.maxDiscount||'—'}%</div><div style="font-size:10px;color:var(--text2);margin-top:2px">Max discount</div></div><div class="comp-stat"><div style="font-size:12px;font-weight:700">${c.revenue||'—'}</div><div style="font-size:10px;color:var(--text2);margin-top:2px">Est. revenue</div></div><div class="comp-stat"><div style="font-size:12px;font-weight:700">${c.priceVsUs||'—'}</div><div style="font-size:10px;color:var(--text2);margin-top:2px">Price vs us</div></div></div><div style="font-size:12.5px;color:var(--text2);line-height:1.6;padding:10px;background:var(--bg2);border-radius:var(--r);margin-top:8px">${c.notes||''}</div></div>`).join('')||'<div style="font-size:13px;color:var(--text2);padding:12px">No competitors added yet.</div>';
+}
+function renderWeeklyReviews(){
+  const el=document.getElementById('past-reviews');if(!el)return;
+  el.innerHTML=(D.weeklyReviews||[]).slice().reverse().map(r=>`<div style="background:var(--bg2);border-radius:var(--r);padding:12px;margin-bottom:8px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><div style="font-size:12px;font-weight:600">Week of ${r.week}</div><div style="font-size:20px;font-weight:700;color:${r.rating>=4?'var(--green)':r.rating>=3?'var(--amber)':'var(--red)'}">${r.rating}/5</div></div><div style="font-size:12px;color:var(--text2)">Energy: ${r.energy}/5 · ${r.wins?r.wins.slice(0,80)+'…':''}</div></div>`).join('')||'<div style="font-size:13px;color:var(--text2)">No reviews yet. Start your Sunday review ritual.</div>';
+}
+function renderChat(){
+  const el=document.getElementById('chat-msgs');if(!el)return;
+  el.querySelectorAll('.msg:not(.sys)').forEach(e=>e.remove());
+  (D.chat||[]).forEach(m=>{const d=document.createElement('div');d.className=`msg ${m.role==='user'?'user':'ai'}`;d.innerHTML=m.content.replace(/\n/g,'<br>');el.appendChild(d);});
+  el.scrollTop=el.scrollHeight;
+}
+
+function toggleMeetingType(){
+  const t=document.getElementById('nm-type').value;
+  document.getElementById('nm-recurring-fields').style.display=t==='recurring'?'':'none';
+  document.getElementById('nm-oneoff-fields').style.display=t==='impromptu'?'':'none';
+}
+
+function setFilter(v){D.taskFilter=v;renderTaskTable();renderFilterRow();}
+function setDecisionFilter(v){D.decisionFilter=v;renderDecisions();}
+function setRating(n,el){currentRating=n;document.querySelectorAll('#week-rating-btns .energy-btn').forEach((b,i)=>b.classList.toggle('active',i<n));}
+function setEnergy(n,el){currentEnergy=n;document.querySelectorAll('#energy-btns .energy-btn').forEach((b,i)=>b.classList.toggle('active',i<n));}
+function useSug(el){document.getElementById('chat-in').value=el.textContent;document.getElementById('chat-in').focus();}
+function chatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}}
+
+async function sendChat(){
+  const inp=document.getElementById('chat-in'),text=inp.value.trim();if(!text)return;
+  inp.value='';
+  if(!D.chat)D.chat=[];
+  D.chat.push({role:'user',content:text});
+  const el=document.getElementById('chat-msgs');
+  const ub=document.createElement('div');ub.className='msg user';ub.textContent=text;el.appendChild(ub);
+  const lb=document.createElement('div');lb.className='msg ai';lb.textContent='Thinking...';lb.id='chat-loading';el.appendChild(lb);
+  el.scrollTop=el.scrollHeight;
+  const tc=D.tasks.filter(t=>!t.done).map(t=>`- ${t.title} [${t.vertical}, ${t.priority}]`).join('\n');
+  const pc=D.people.map(p=>`- ${p.name} (${p.role}, morale:${p.morale})`).join('\n');
+  const sys=`${CTX}\nOpen tasks:\n${tc}\nTeam:\n${pc}\nToday: ${new Date().toDateString()}\n\nYou are ${D.settings.name}'s personal AI assistant. Be concise and Salus-specific. Saudi work week=Sun-Thu.\nIf task mentioned: <TASKS>[{"title":"...","vertical":"...","priority":"High/Medium/Low","output":"Action","tags":[],"assignee":""}]</TASKS>\nIf people update: <PEOPLE>{"name":"...","note":"...","morale":"great/good/neutral/low"}</PEOPLE>\nIf decision: <DECISION>{"title":"...","category":"Strategic/Operational/People/Financial","rationale":"...","vertical":"..."}</DECISION>`;
+  try{
+    const raw=await callAI(D.chat.slice(-10).map(m=>({role:m.role,content:m.content})),sys);
+    let disp=raw;
+    const tm=raw.match(/<TASKS>([\s\S]*?)<\/TASKS>/),pm=raw.match(/<PEOPLE>([\s\S]*?)<\/PEOPLE>/),dm=raw.match(/<DECISION>([\s\S]*?)<\/DECISION>/);
+    disp=disp.replace(/<TASKS>[\s\S]*?<\/TASKS>/,'').replace(/<PEOPLE>[\s\S]*?<\/PEOPLE>/,'').replace(/<DECISION>[\s\S]*?<\/DECISION>/,'').trim();
+    if(tm){try{const nt=JSON.parse(tm[1]);nt.forEach(t=>{const d=new Date();d.setDate(d.getDate()+7);D.tasks.push({id:Date.now()+Math.random(),title:t.title,vertical:t.vertical||'General Management',priority:t.priority||'Medium',due:d.toISOString().split('T')[0],status:'To Do',tags:t.tags||[],output:t.output||'Action',desc:'Added via quick entry',done:false,assignee:t.assignee||''});});disp+=`\n\n✓ Added ${nt.length} task${nt.length>1?'s':''}.`;saveData();renderAll();}catch(e){}}
+    if(pm){try{const u=JSON.parse(pm[1]);const p=D.people.find(p=>p.name.toLowerCase().includes(u.name.toLowerCase()));if(p){if(u.morale)p.morale=u.morale;if(u.note){if(!p.encounters)p.encounters=[];p.encounters.push({date:new Date().toISOString().split('T')[0],note:u.note});}saveData();renderPeople();disp+=`\n\n✓ Updated ${p.name}.`;}}catch(e){}}
+    if(dm){try{const dec=JSON.parse(dm[1]);D.decisions.push({id:Date.now(),title:dec.title,category:dec.category||'Operational',vertical:dec.vertical||'General Management',rationale:dec.rationale||'',outcome:'',date:new Date().toISOString().split('T')[0]});saveData();renderDecisions();disp+=`\n\n✓ Logged decision.`;}catch(e){}}
+    D.chat.push({role:'assistant',content:disp});saveData();
+    document.getElementById('chat-loading').remove();
+    const ab=document.createElement('div');ab.className='msg ai';ab.innerHTML=disp.replace(/\n/g,'<br>');el.appendChild(ab);
+    el.scrollTop=el.scrollHeight;
+  }catch(e){
+    document.getElementById('chat-loading')?.remove();
+    const eb=document.createElement('div');eb.className='msg ai';eb.textContent='Error: '+(e.message.includes('No API key')?'No API key. Go to Settings.':e.message);el.appendChild(eb);
+  }
+}
+
+let inlineTaskChat=[],inlinePersonChat=[];
+
+async function sendInlineChat(type){
+  const inputEl=document.getElementById(type+'-chat-input');
+  const text=inputEl.value.trim();if(!text)return;
+  inputEl.value='';
+  const msgsEl=document.getElementById(type+'-chat-msgs');
+  const ub=document.createElement('div');ub.className='inline-msg user';ub.textContent=text;msgsEl.appendChild(ub);
+  const lb=document.createElement('div');lb.className='inline-msg ai';lb.textContent='...';lb.id='inline-loading-'+type;msgsEl.appendChild(lb);
+  msgsEl.scrollTop=msgsEl.scrollHeight;
+  const ctx=type==='task'?`${CTX}\n\nContext: Task "${window._selTask?.title}" (${window._selTask?.vertical}, ${window._selTask?.priority}). ${window._selTask?.desc||''}`:
+    `${CTX}\n\nContext: Person "${window._selPerson?.name}" (${window._selPerson?.role}, morale:${window._selPerson?.morale}). Notes: ${window._selPerson?.notes||''}. Recent: ${(window._selPerson?.encounters||[]).slice(-1).map(e=>e.note).join('')||'none'}`;
+  const chatArr=type==='task'?inlineTaskChat:inlinePersonChat;
+  chatArr.push({role:'user',content:text});
+  try{
+    const resp=await callAI(chatArr.slice(-6).map(m=>({role:m.role,content:m.content})),ctx);
+    chatArr.push({role:'assistant',content:resp});
+    if(resp.includes('TASK:')){ const tl=resp.match(/TASK: (.+)/);if(tl){const d=new Date();d.setDate(d.getDate()+7);D.tasks.push({id:Date.now(),title:tl[1],vertical:window._selTask?.vertical||'General Management',priority:'Medium',due:d.toISOString().split('T')[0],status:'To Do',tags:[],output:'Action',desc:'Added via task chat',done:false,assignee:''});saveData();renderAll();}}
+    document.getElementById('inline-loading-'+type)?.remove();
+    const ab=document.createElement('div');ab.className='inline-msg ai';ab.innerHTML=resp.replace(/\n/g,'<br>');msgsEl.appendChild(ab);
+    msgsEl.scrollTop=msgsEl.scrollHeight;
+  }catch(e){document.getElementById('inline-loading-'+type)?.remove();const eb=document.createElement('div');eb.className='inline-msg ai';eb.textContent='Error: '+e.message;msgsEl.appendChild(eb);}
+}
+
+function openM(n){document.getElementById('mo-'+n)?.classList.add('open');}
+function closeM(n){document.getElementById('mo-'+n)?.classList.remove('open');}
+function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('mob-overlay').classList.add('on');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('mob-overlay').classList.remove('on');}
+
+function saveWeeklyReview(){
+  const wins=document.getElementById('review-wins').value.trim();
+  const missed=document.getElementById('review-missed').value.trim();
+  const next=document.getElementById('review-next').value.trim();
+  if(!wins&&!missed)return;
+  const week=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  D.weeklyReviews.push({week,rating:currentRating||3,energy:currentEnergy||3,wins,missed,next,date:new Date().toISOString().split('T')[0]});
+  if(D.settings.raiseTracker)D.raiseLog.push({week,summary:`Wins: ${wins.slice(0,100)}. Next week: ${next.slice(0,80)}.`});
+  saveData();renderWeeklyReviews();renderRaiseLog();
+  ['review-wins','review-missed','review-next'].forEach(id=>document.getElementById(id).value='');
+  currentRating=0;currentEnergy=0;
+  document.querySelectorAll('.energy-btn').forEach(b=>b.classList.remove('active'));
+  alert('Weekly review saved!');
+}
+
+function addTask(){
+  const t={id:Date.now(),title:document.getElementById('nt-t').value,vertical:document.getElementById('nt-v').value,priority:document.getElementById('nt-p').value,due:document.getElementById('nt-due').value,status:'To Do',tags:document.getElementById('nt-tags').value.split(',').map(s=>s.trim()).filter(Boolean),output:document.getElementById('nt-o').value,desc:document.getElementById('nt-d').value,done:false,assignee:document.getElementById('nt-assign').value};
+  if(!t.title)return;D.tasks.push(t);saveData();renderAll();renderCoaching();closeM('add-task');
+  ['nt-t','nt-d','nt-tags'].forEach(id=>document.getElementById(id).value='');
+}
+function addMeeting(){
+  const type=document.getElementById('nm-type').value;
+  const m={id:Date.now(),name:document.getElementById('nm-name').value,vertical:document.getElementById('nm-vertical').value,type,day:document.getElementById('nm-day').value,time:document.getElementById('nm-time').value,date:document.getElementById('nm-date').value,tz:document.getElementById('nm-tz').value,participants:document.getElementById('nm-participants').value,notes:document.getElementById('nm-notes').value,notesHistory:[]};
+  if(!m.name)return;D.meetings.push(m);saveData();renderMeetings();closeM('add-meeting');
+}
+function openMeetingNotes(id){
+  currentMeetingId=id;
+  const m=D.meetings.find(x=>x.id===id);if(!m)return;
+  document.getElementById('meeting-notes-title').textContent=`Notes — ${m.name}`;
+  document.getElementById('mn-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('mn-notes').value='';document.getElementById('mn-tasks').value='';
+  openM('meeting-notes');
+}
+function saveMeetingNotes(){
+  const m=D.meetings.find(x=>x.id===currentMeetingId);if(!m)return;
+  if(!m.notesHistory)m.notesHistory=[];
+  const notes=document.getElementById('mn-notes').value.trim();
+  const tasks=document.getElementById('mn-tasks').value.trim();
+  if(!notes)return;
+  m.notesHistory.push({date:document.getElementById('mn-date').value,notes,tasks});
+  if(tasks){tasks.split('\n').filter(t=>t.trim().startsWith('-')).forEach(t=>{const title=t.replace(/^-\s*/,'').trim();if(title)D.tasks.push({id:Date.now()+Math.random(),title,vertical:m.vertical,priority:'Medium',due:'',status:'To Do',tags:['meeting'],output:'Action',desc:`From: ${m.name}`,done:false,assignee:''});});}
+  D.brain.unshift({id:Date.now(),type:'Meeting notes',vertical:m.vertical,title:`${m.name} — ${fd(document.getElementById('mn-date').value)}`,date:document.getElementById('mn-date').value,content:notes,tasks_extracted:0,section:'meeting'});
+  saveData();renderAll();renderCoaching();closeM('meeting-notes');
+}
+function addDecision(){
+  const d={id:Date.now(),title:document.getElementById('nd-title').value,category:document.getElementById('nd-cat').value,vertical:document.getElementById('nd-vertical').value,rationale:document.getElementById('nd-rationale').value,outcome:document.getElementById('nd-outcome').value,date:new Date().toISOString().split('T')[0]};
+  if(!d.title)return;D.decisions.push(d);saveData();renderDecisions();closeM('add-decision');
+  ['nd-title','nd-rationale','nd-outcome'].forEach(id=>document.getElementById(id).value='');
+}
+function addCompetitor(){
+  const c={id:Date.now(),name:document.getElementById('nc-name').value,market:document.getElementById('nc-market').value,maxDiscount:document.getElementById('nc-discount').value,revenue:document.getElementById('nc-revenue').value,priceVsUs:document.getElementById('nc-price').value,notes:document.getElementById('nc-notes').value,lastUpdated:new Date().toISOString().split('T')[0]};
+  if(!c.name)return;D.competitors.push(c);saveData();renderCompetitors();closeM('add-competitor');
+}
+function addPerson(){
+  const p={id:Date.now(),name:document.getElementById('np-name').value,type:document.getElementById('np-type').value,role:document.getElementById('np-role').value,team:document.getElementById('np-team').value,reportsTo:document.getElementById('np-reports-to').value,company:document.getElementById('np-company').value,jd:document.getElementById('np-jd').value,contract:document.getElementById('np-contract').value,startDate:document.getElementById('np-start').value,birthday:document.getElementById('np-bday').value,morale:document.getElementById('np-morale').value,notes:document.getElementById('np-notes').value,encounters:[]};
+  if(!p.name)return;D.people.push(p);populateAllSelects();saveData();renderPeople();closeM('add-person');
+}
+function addProject(){
+  const p={id:Date.now(),name:document.getElementById('nproj-name').value,type:document.getElementById('nproj-type').value,vertical:document.getElementById('nproj-vertical').value,status:document.getElementById('nproj-status').value,priority:document.getElementById('nproj-priority').value,startDate:document.getElementById('nproj-start').value,deadline:document.getElementById('nproj-deadline').value,budget:document.getElementById('nproj-budget').value,lead:document.getElementById('nproj-lead').value,desc:document.getElementById('nproj-desc').value,tasks:[],notes:''};
+  if(!p.name)return;D.projects.push(p);saveData();renderProjects();closeM('add-project');
+}
+function saveBrain(){
+  const e={id:Date.now(),type:document.getElementById('nb-type').value,vertical:document.getElementById('nb-v').value,title:document.getElementById('nb-title').value,date:new Date().toISOString().split('T')[0],content:document.getElementById('nb-content').value,tasks_extracted:0,section:getSectionFromType(document.getElementById('nb-type').value)};
+  if(!e.title&&!e.content)return;D.brain.unshift(e);saveData();renderBrain();closeM('add-brain');
+  ['nb-title','nb-content'].forEach(id=>document.getElementById(id).value='');
+}
+function getSectionFromType(t){
+  if(t.includes('Meeting')||t.includes('Email')||t.includes('WhatsApp'))return'meeting';
+  if(t.includes('Financial')||t.includes('Sales'))return'financial';
+  if(t.includes('Competitive'))return'competitive';
+  return'other';
+}
+async function extractBrain(){
+  const content=document.getElementById('nb-content').value,vertical=document.getElementById('nb-v').value;
+  if(!content){alert('Please add some content first.');return;}
+  saveBrain();
+  const lEl=document.getElementById('loading-brain'),oEl=document.getElementById('brain-out');
+  lEl.style.display='block';oEl.classList.remove('on');
+  try{const text=await callAI([{role:'user',content:`${CTX}\n\nExtract 3-7 actionable GM tasks from this ${vertical} content. Bullet list: task, priority, output type.\n\n"""${content.slice(0,3000)}"""`}]);lEl.style.display='none';oEl.textContent=text;oEl.classList.add('on');}
+  catch(e){lEl.style.display='none';oEl.textContent='Error: '+e.message;oEl.classList.add('on');}
+}
+function toggleDone(id){const t=D.tasks.find(t=>t.id===id);if(t){t.done=!t.done;t.status=t.done?'Done':'To Do';}saveData();renderAll();renderCoaching();}
+
+function openTask(id){
+  const t=D.tasks.find(t=>t.id===id);if(!t)return;window._selTask=t;inlineTaskChat=[];
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('task-detail').innerHTML=`
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">
+      <div><div style="font-size:17px;font-weight:700;margin-bottom:8px">${t.title}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="chip" style="background:#E6F1FB;color:#0C447C">${t.vertical}</span><div style="display:flex;align-items:center;gap:4px"><div class="pdot ${t.priority==='High'?'ph':t.priority==='Medium'?'pm':'pl'}"></div><span style="font-size:12px;color:var(--text2)">${t.priority}</span></div><span style="font-size:12px;color:var(--text2)">${t.output}</span>${t.assignee?`<span style="font-size:12px;color:var(--navy)">→ ${t.assignee}</span>`:''}</div></div>
+      <button style="font-size:12px;padding:6px 13px;border-radius:var(--r);border:1px solid var(--border2);background:${t.done?'#E1F5EE':'transparent'};color:${t.done?'#085041':'var(--text2)'};cursor:pointer;font-family:inherit;font-weight:500" onclick="toggleDone(${t.id});closeM('task-detail')">${t.done?'Mark incomplete':'Mark done'}</button>
+    </div>
+    ${t.desc?`<div style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.6">${t.desc}</div>`:''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="padding:12px;background:var(--bg2);border-radius:var(--r)"><div style="font-size:10px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Due</div><div style="${!t.done&&t.due&&t.due<today?'color:var(--red);font-weight:600':''}">${fd(t.due)||'No date'}</div></div>
+      <div style="padding:12px;background:var(--bg2);border-radius:var(--r)"><div style="font-size:10px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Status</div>${t.status}</div>
+    </div>`;
+  document.getElementById('task-chat-msgs').innerHTML='';
+  document.getElementById('task-out').classList.remove('on');
+  document.getElementById('loading-task').style.display='none';
+  openM('task-detail');
+}
+
+function openPerson(id){
+  const p=D.people.find(p=>p.id===id);if(!p)return;window._selPerson=p;inlinePersonChat=[];
+  const ac=['#EEEDFE','#E1F5EE','#FAECE7','#FAEEDA','#FBEAF0','#EAF3DE','#E6F1FB','#F1EFE8'];
+  const at=['#534AB7','#0F6E56','#993C1D','#854F0B','#993556','#3B6D11','#0C447C','#444'];
+  const idx=D.people.indexOf(p),mc={great:'#1D9E75',good:'#639922',neutral:'#EF9F27',low:'#E24B4A'};
+  document.getElementById('person-detail').innerHTML=`
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+      <div class="avatar" style="width:48px;height:48px;font-size:16px;font-weight:600;background:${ac[idx%8]};color:${at[idx%8]}">${p.name.split(' ').map(n=>n[0]).join('')}</div>
+      <div><div style="font-size:17px;font-weight:700">${p.name}</div><div style="font-size:13px;color:var(--text2)">${p.role}${p.company?' · '+p.company:''}</div></div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:6px"><div class="mdot" style="background:${mc[p.morale]}"></div><span style="font-size:12px;color:var(--text2)">${p.morale}</span></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;font-size:12px">
+      ${p.team?`<div style="padding:8px;background:var(--bg2);border-radius:var(--r)"><div style="color:var(--text2);font-size:10px;font-weight:600;margin-bottom:2px">TEAM</div>${p.team}</div>`:''}
+      ${p.reportsTo?`<div style="padding:8px;background:var(--bg2);border-radius:var(--r)"><div style="color:var(--text2);font-size:10px;font-weight:600;margin-bottom:2px">REPORTS TO</div>${p.reportsTo}</div>`:''}
+      ${p.contract?`<div style="padding:8px;background:var(--bg2);border-radius:var(--r)"><div style="color:var(--text2);font-size:10px;font-weight:600;margin-bottom:2px">CONTRACT</div>${p.contract}</div>`:''}
+      ${p.startDate?`<div style="padding:8px;background:var(--bg2);border-radius:var(--r)"><div style="color:var(--text2);font-size:10px;font-weight:600;margin-bottom:2px">START DATE</div>${fd(p.startDate)}</div>`:''}
+    </div>
+    ${p.jd?`<div style="font-size:13px;margin-bottom:12px"><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">Job description</div><div style="padding:12px;background:var(--bg2);border-radius:var(--r);line-height:1.65">${p.jd}</div></div>`:''}
+    ${p.notes?`<div style="font-size:13px;margin-bottom:12px"><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">Personal notes</div><div style="padding:12px;background:var(--bg2);border-radius:var(--r);line-height:1.65">${p.notes}</div></div>`:''}
+    ${p.encounters&&p.encounters.length?`<div><div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Recent encounters</div>${p.encounters.slice(-3).map(e=>`<div style="font-size:13px;padding:10px 14px;background:var(--bg2);border-radius:var(--r);margin-bottom:6px"><div style="font-size:10px;color:var(--text2);margin-bottom:3px">${fd(e.date)}</div>${e.note}</div>`).join('')}</div>`:''}`;
+  document.getElementById('person-chat-msgs').innerHTML='';
+  document.getElementById('person-out').classList.remove('on');
+  document.getElementById('loading-person').style.display='none';
+  openM('person-detail');
+}
+
+function openProject(id){
+  const p=D.projects.find(p=>p.id===id);if(!p)return;window._selProject=p;
+  const statColors={'Planning':'#0C447C','Active':'#27500A','On hold':'#633806','Completed':'#085041','Cancelled':'#E24B4A'};
+  document.getElementById('project-detail').innerHTML=`
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
+      <div><div style="font-size:17px;font-weight:700;margin-bottom:4px">${p.name}</div><div style="font-size:13px;color:var(--text2)">${p.type} · ${p.vertical}</div></div>
+      <span style="font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;background:var(--bg2);color:${statColors[p.status]||'#444'}">${p.status}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;font-size:12px">
+      <div style="padding:10px;background:var(--bg2);border-radius:var(--r);text-align:center"><div style="font-weight:700;font-size:15px">${p.budget?'SAR '+Number(p.budget).toLocaleString():'—'}</div><div style="color:var(--text2);font-size:10px;margin-top:2px">Budget</div></div>
+      <div style="padding:10px;background:var(--bg2);border-radius:var(--r);text-align:center"><div style="font-weight:700;font-size:15px">${p.deadline?fd(p.deadline):'—'}</div><div style="color:var(--text2);font-size:10px;margin-top:2px">Deadline</div></div>
+      <div style="padding:10px;background:var(--bg2);border-radius:var(--r);text-align:center"><div style="font-weight:700;font-size:15px">${p.lead||'—'}</div><div style="color:var(--text2);font-size:10px;margin-top:2px">Lead</div></div>
+    </div>
+    ${p.desc?`<div style="font-size:13px;color:var(--text2);line-height:1.65;padding:14px;background:var(--bg2);border-radius:var(--r)">${p.desc}</div>`:''}`;
+  document.getElementById('project-out').classList.remove('on');
+  document.getElementById('loading-project').style.display='none';
+  openM('project-detail');
+}
+
+async function runAI(type,a1,a2,a3){
+  const tc=D.tasks.filter(t=>!t.done).map(t=>`- ${t.title} [${t.vertical}, ${t.priority}]`).join('\n');
+  const pc=D.people.map(p=>`- ${p.name} (morale:${p.morale}): ${(p.notes||'').slice(0,60)}`).join('\n');
+  const s=calcS(),today=new Date().toISOString().split('T')[0];
+  const base=`${CTX}\n\nOpen tasks:\n${tc}\nTeam:\n${pc}\nGM Score: ${s.overall}/100. Today: ${new Date().toDateString()}.`;
+  let prompt='',lEl,oEl;
+
+  if(type==='daily-brief'){
+    lEl=document.getElementById('loading-brief');oEl=document.getElementById('ai-banner');
+    lEl.style.display='block';oEl.style.display='none';
+    const od=D.tasks.filter(t=>!t.done&&t.due&&t.due<today).map(t=>t.title);
+    prompt=`${base}\n\nOverdue: ${od.join(', ')||'none'}\n\nWrite a sharp 3-4 sentence Sunday morning briefing (start of Saudi work week Sun-Thu). Top 3 priorities, one urgent flag, one people note. Direct and specific.`;
+  }
+  else if(type==='coaching'){
+    lEl=document.getElementById('loading-coach');oEl=document.getElementById('ai-coach-box');
+    lEl.style.display='block';oEl.style.display='none';
+    const reviews=(D.weeklyReviews||[]).slice(-3).map(r=>`Wk ${r.week}: ${r.rating}/5, energy ${r.energy}/5. Wins: ${r.wins}. Missed: ${r.missed}`).join('\n');
+    prompt=`${base}\n\nPast weekly reviews:\n${reviews||'none'}\n\nHonest executive coaching for ${D.settings.name} as GM. 5 bullets: strengths, pattern noticed, blind spot, concrete action before Thursday, 30-day growth focus. Use real Salus context.`;
+  }
+  else if(type==='task-steps'){
+    const t=window._selTask;if(!t)return;
+    lEl=document.getElementById('loading-task');oEl=document.getElementById('task-out');
+    lEl.style.display='block';oEl.classList.remove('on');
+    prompt=`${base}\n\n3-4 specific next steps for: "${t.title}" (${t.vertical}, ${t.output}). ${t.desc||''}`;
+  }
+  else if(type==='person-insight'){
+    const p=window._selPerson;if(!p)return;
+    lEl=document.getElementById('loading-person');oEl=document.getElementById('person-out');
+    lEl.style.display='block';oEl.classList.remove('on');
+    prompt=`${base}\n\n2-3 specific suggestions for next interaction with ${p.name} (${p.role}, morale:${p.morale}). JD: ${p.jd||''}. Notes: ${p.notes||''}. Recent: ${(p.encounters||[]).slice(-1).map(e=>e.note).join('')||'none'}`;
+  }
+  else if(type==='project-brief'){
+    const p=window._selProject;if(!p)return;
+    lEl=document.getElementById('loading-project');oEl=document.getElementById('project-out');
+    lEl.style.display='block';oEl.classList.remove('on');
+    prompt=`${base}\n\nProject brief for "${p.name}" (${p.type}, ${p.vertical}): ${p.desc||''}. Deadline: ${p.deadline}. Budget: ${p.budget} SAR. Give: key milestones, risks, who to involve, next 3 actions.`;
+  }
+  else if(type==='meeting-brief'){
+    const mid=a3;
+    lEl=document.getElementById('mloading-'+mid);oEl=document.getElementById('mbrief-'+mid);
+    if(!lEl||!oEl)return;lEl.textContent='Generating...';lEl.style.display='block';oEl.classList.remove('on');
+    const mtg=D.meetings.find(m=>m.id===mid);
+    const lastNotes=mtg?.notesHistory?.slice(-1)[0]?.notes||'No previous notes';
+    const rt=D.tasks.filter(t=>!t.done&&t.vertical===a2).map(t=>`- ${t.title} [${t.priority}]`).join('\n');
+    prompt=`${base}\n\nPre-meeting brief (5-7 bullets) for "${a1}" (${a2}). Open items, risks, follow-ups, one agenda suggestion.\n\nOpen tasks:\n${rt||'none'}\nLast notes: ${lastNotes}`;
+  }
+  else if(type==='weekly-prep'){
+    lEl=document.getElementById('loading-meetings');oEl=document.getElementById('meetings-ai-out');
+    lEl.style.display='block';oEl.classList.remove('on');
+    const mtgList=D.meetings.filter(m=>m.type==='recurring').map(m=>`${m.day} ${m.time} (${m.tz||''}): ${m.name}`).join('\n');
+    prompt=`${base}\n\nSunday weekly prep brief for all recurring meetings this week:\n${mtgList}\n\nFor each: 2-3 bullets on what to focus on. Keep tight and actionable.`;
+  }
+  else if(type==='raise-update'){
+    const weekTasks=D.tasks.filter(t=>t.done).slice(-10).map(t=>t.title).join(', ');
+    const decs=D.decisions.slice(-3).map(d=>d.title).join(', ');
+    prompt=`${base}\n\nWrite a 2-sentence weekly impact summary for the raise tracker. Specific, strategic value-focused.\n\nCompleted: ${weekTasks||'none'}\nDecisions: ${decs||'none'}`;
+    try{const text=await callAI([{role:'user',content:prompt}]);D.raiseLog.push({week:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'}),summary:text});saveData();renderRaiseLog();alert('Raise tracker updated!');}catch(e){alert('Error: '+e.message);}return;
+  }
+  else if(type==='weekly-summary'){
+    lEl=document.getElementById('loading-review');oEl=document.getElementById('review-ai-out');
+    lEl.style.display='block';oEl.classList.remove('on');
+    prompt=`${base}\n\nReflective weekly summary for ${D.settings.name}. Wins: ${document.getElementById('review-wins').value}. Missed: ${document.getElementById('review-missed').value}. Next: ${document.getElementById('review-next').value}. Rating ${currentRating}/5, energy ${currentEnergy}/5.\n\nInclude: pattern observation, one coaching insight, specific advice for next week.`;
+  }
+  else if(type==='weekly'){
+    lEl=document.getElementById('loading-report');oEl=document.getElementById('report-out');
+    lEl.style.display='block';oEl.classList.remove('on');
+    prompt=`${base}\n\nWeekly GM report (Sun-Thu work week). Accomplishments, in progress, risks, next week priorities. Include projects and partnerships.`;
+  }
+  else if(type==='ceo'){
+    lEl=document.getElementById('loading-report');oEl=document.getElementById('report-out');
+    lEl.style.display='block';oEl.classList.remove('on');
+    const od2=D.tasks.filter(t=>!t.done&&t.due&&t.due<today).length;
+    prompt=`${base}\n\nShort informal CEO update from ${D.settings.name} to Rami. Collegial, 3-4 paragraphs. Highlights, risks, Not Guilty/projects progress. ${D.tasks.filter(t=>t.done).length} completed, ${od2} overdue.`;
+  }
+  else if(type==='raise-report'){
+    lEl=document.getElementById('loading-report');oEl=document.getElementById('report-out');
+    lEl.style.display='block';oEl.classList.remove('on');
+    const entries=(D.raiseLog||[]).map(r=>`${r.week}: ${r.summary}`).join('\n');
+    const decs=D.decisions.map(d=>`${fd(d.date)}: ${d.title} (${d.category})`).join('\n');
+    prompt=`${base}\n\nCompelling GM performance summary for raise conversation. Executive impact summary, key decisions, initiatives led, teams supported, value delivered. Be specific.\n\nWeekly log:\n${entries||'none'}\nDecisions:\n${decs||'none'}`;
+  }
+  else if(type==='comp-analysis'){
+    lEl=document.getElementById('loading-comp');oEl=document.getElementById('comp-ai-out');
+    lEl.style.display='block';oEl.classList.remove('on');
+    const comp=D.competitors.find(c=>c.name===a1);
+    prompt=`${base}\n\nAnalyse ${a1} vs Salus. Data: ${comp?JSON.stringify(comp):'unknown'}. 3 strategic recommendations for how Salus should position against ${a1}. Specific and actionable.`;
+  }
+  else if(type==='comp-overview'){
+    lEl=document.getElementById('loading-comp');oEl=document.getElementById('comp-ai-out');
+    lEl.style.display='block';oEl.classList.remove('on');
+    const comps=D.competitors.map(c=>`${c.name}: max discount ${c.maxDiscount}%, ${c.revenue}, ${c.priceVsUs} price. ${c.notes}`).join('\n');
+    prompt=`${base}\n\nMarket overview and competitive analysis for Salus. Competitors:\n${comps||'none tracked yet'}\n\nGive: market positioning recommendation, 3 competitive advantages Salus should exploit, 2 threats to watch.`;
+  }
+
+  if(!prompt)return;
+  try{
+    const text=await callAI([{role:'user',content:prompt}]);
+    if(type==='daily-brief'){lEl.style.display='none';oEl.style.display='';document.getElementById('ai-banner-body').textContent=text;}
+    else if(type==='coaching'){lEl.style.display='none';oEl.style.display='';document.getElementById('ai-coach-text').textContent=text;}
+    else if(type==='meeting-brief'){lEl.style.display='none';oEl.textContent=text;oEl.classList.add('on');}
+    else{
+      if(lEl)lEl.style.display='none';
+      if(oEl){oEl.textContent=text;oEl.classList.add('on');}
+      if(type==='ceo'||type==='weekly'){if(!D.savedReports)D.savedReports=[];D.savedReports.push({date:new Date().toLocaleDateString('en-GB'),type:type==='ceo'?'CEO Update':'Weekly Report',content:text});saveData();renderSavedReports();}
+    }
+  }catch(e){
+    if(lEl)lEl.style.display='none';
+    const msg='Error: '+(e.message.includes('No API key')?'No API key. Go to Settings.':e.message);
+    if(oEl){oEl.textContent=msg;if(type==='daily-brief'||type==='coaching')oEl.style.display='';else oEl.classList.add('on');}
+  }
+}
+
+function go(view,el){
+  closeSidebar();
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  if(el)el.classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  const titles={dashboard:`Good morning, ${D.settings?.name?.split(' ')[0]||'Sola'}`,quickentry:'Quick entry',tasks:'Tasks',brain:'Company Brain',people:'People',meetings:'Meetings',reports:'Reports',coaching:'Coaching & growth',projects:'Projects',competitive:'Competitive Intel',weeklyreview:'Weekly review',decisions:'Decision log',settings:'Settings'};
+  document.getElementById('tb-title').textContent=titles[view]||view;
+  document.getElementById('add-btn').style.display=['tasks','dashboard'].includes(view)?'block':'none';
+  const aib=document.getElementById('ai-btn');
+  const aiLabels={coaching:'AI coaching ↗',quickentry:'Clear chat',reports:'CEO update ↗',competitive:'Market analysis ↗',weeklyreview:'AI summary ↗',projects:'Project brief ↗'};
+  aib.textContent=aiLabels[view]||'AI brief ↗';
+  aib.onclick=view==='coaching'?()=>runAI('coaching'):view==='quickentry'?()=>{D.chat=[];saveData();renderChat();}:view==='reports'?()=>runAI('ceo'):view==='weeklyreview'?()=>runAI('weekly-summary'):view==='competitive'?()=>runAI('comp-overview'):()=>runAI('daily-brief');
+  if(view==='coaching')renderCoaching();
+  if(view==='settings')loadSettingsView();
+  if(view==='quickentry')setTimeout(()=>{const el=document.getElementById('chat-msgs');if(el)el.scrollTop=el.scrollHeight;},100);
+}
+function handleAI(){const v=document.querySelector('.view.active')?.id?.replace('view-','');if(v==='coaching')runAI('coaching');else if(v==='reports')runAI('ceo');else if(v==='competitive')runAI('comp-overview');else runAI('daily-brief');}
+function switchTV(v,el){document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.getElementById('tv-list').style.display=v==='list'?'':'none';document.getElementById('tv-kanban').style.display=v==='kanban'?'':'none';}
+function switchPeopleView(v,el){document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.getElementById('people-grid-view').style.display=v==='grid'?'':'none';document.getElementById('people-org-view').style.display=v==='org'?'':'none';}
+function fd(d){if(!d)return'';const date=new Date(d);if(isNaN(date))return d;return date.toLocaleDateString('en-GB',{day:'numeric',month:'short'});}
+function clearAllData(){if(confirm('Delete ALL data? Cannot be undone.')){localStorage.removeItem('salus-hq-v5');localStorage.removeItem('salus-api-key');location.reload();}}
+
+document.querySelectorAll('.overlay').forEach(m=>m.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
+
+window.addEventListener('load',()=>{
+  const key=localStorage.getItem('salus-api-key');
+  if(key){document.getElementById('setup-screen').style.display='none';document.getElementById('main-app').style.display='flex';initApp();}
+});
+</script>
+</body>
+</html>
